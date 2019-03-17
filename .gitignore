@@ -1,0 +1,8 @@
+cmake/
+build/*
+*.png
+*.gif
+*.pyc
+*.egg-info
+.ipynb_checkpoints
+*.mp4
