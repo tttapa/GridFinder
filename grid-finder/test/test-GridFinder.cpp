@@ -5,13 +5,70 @@
 
 using namespace std;
 
-TEST(GridMask, getStartingPixel) {
-    GridMask<4, 6> gm = {{{
+TEST(GridMask, getStartingPixelFullLine) {
+    GridMask<4, 9> gm = {{{
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+    }}};
+
+    Pixel result = gm.getStartingPixel(2);
+    Pixel expect = {2, 4};
+    ASSERT_EQ(result, expect);
+}
+
+TEST(GridMask, getStartingPixelBottom) {
+    GridMask<4, 9> gm = {{{
+        {0, 0, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 0},
         {0, 0, 0, 0},
         {0, 0, 1, 0},
         {0, 0, 1, 0},
         {0, 0, 1, 0},
         {0, 0, 0, 0},
+    }}};
+
+    Pixel result = gm.getStartingPixel(2);
+    Pixel expect = {2, 6};
+    ASSERT_EQ(result, expect);
+}
+
+TEST(GridMask, getStartingPixelBottomBorder) {
+    GridMask<4, 9> gm = {{{
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+    }}};
+
+    Pixel result = gm.getStartingPixel(2);
+    Pixel expect = {2, 7};
+    ASSERT_EQ(result, expect);
+}
+
+TEST(GridMask, getStartingPixelTop) {
+    GridMask<4, 9> gm = {{{
+        {0, 0, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
         {0, 0, 0, 0},
     }}};
 
@@ -20,18 +77,21 @@ TEST(GridMask, getStartingPixel) {
     ASSERT_EQ(result, expect);
 }
 
-TEST(GridMask, getStartingPixelBottom) {
-    GridMask<4, 6> gm = {{{
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
+TEST(GridMask, getStartingPixelTopBorder) {
+    GridMask<4, 9> gm = {{{
         {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
         {0, 0, 1, 0},
         {0, 0, 1, 0},
     }}};
 
     Pixel result = gm.getStartingPixel(2);
-    Pixel expect = {2, 4};
+    Pixel expect = {2, 1};
     ASSERT_EQ(result, expect);
 }
 
@@ -108,7 +168,7 @@ TEST(GridMask, getStartingPixelNoWhitePixels) {
     try {
         gm.getStartingPixel();
         FAIL();
-    } catch (std::exception &e) {
+    } catch (std::runtime_error &e) {
     }
 }
 
