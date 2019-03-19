@@ -1,12 +1,13 @@
 #pragma once
 
-#include <ostream>
 #include <cstddef>
+#include <ostream>
 
 struct Pixel {
-    Pixel(int x, int y) : x(x), y(y) {}
-    int x, y;
-    bool isValid() const { return x >= 0 && y >= 0; }
+    Pixel(size_t x, size_t y) : x(x), y(y) {}
+    Pixel() : x(-1), y(-1) {}
+    size_t x, y;
+    bool isValid() const { return x != (size_t) -1 && y != (size_t) -1; }
     bool operator==(Pixel other) const {
         return this->x == other.x && this->y == other.y;
     }

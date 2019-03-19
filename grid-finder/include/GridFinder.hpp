@@ -35,7 +35,19 @@ class GridMask {
     GridMask(const Img_t &mask) : mask(mask) {}
     GridMask() : mask{} {}
 
-    Pixel getStartingPixel(size_t x) const {
+    struct StartingPoint {
+        StartingPoint(bool found) : found(found) {}
+        StartingPoint(Pixel pixel, size_t width, bool above)
+            : found(true), pixel(pixel), width(width), above(above) {}
+        bool found;
+        Pixel pixel;
+        size_t width;
+        bool above;
+
+        explicit operator bool() const { return found; }
+    };
+
+    StartingPoint getStartingPoint(size_t x) const {
         if (x >= W)
             throw std::out_of_range("x out of range");
 
@@ -64,8 +76,15 @@ class GridMask {
                     break;
                 ++y;
             }
-            y = (first_white + last_white) / 2;
-            return Pixel(x, y);
+            y            = (first_white + last_white) / 2;
+            size_t width = last_white - first_white + 1;
+            bool above =
+                (last_white - c.getCenter()) > (c.getCenter() - first_white);
+            return {
+                Pixel(x, y),
+                width,
+                above,
+            };
 
             // If the center pixel is not white, look for the first white pixel in
             // both directions
@@ -79,7 +98,7 @@ class GridMask {
                 }
             }
             if (first_white >= H)
-                return Pixel(-1, -1);
+                return false;
 
             size_t last_white =
                 first_white;  // initialization keeps the compiler happy
@@ -94,6 +113,14 @@ class GridMask {
                         break;
                     --y;
                 }
+                y            = (first_white + last_white) / 2;
+                size_t width = first_white - last_white + 1;
+                bool above   = false;
+                return {
+                    Pixel(x, y),
+                    width,
+                    above,
+                };
                 // If the first white pixel is above the center
             } else {
                 // Look upwards for the last white pixel of that line
@@ -105,17 +132,23 @@ class GridMask {
                         break;
                     ++y;
                 }
+                y            = (first_white + last_white) / 2;
+                size_t width = last_white - first_white + 1;
+                bool above   = true;
+                return {
+                    Pixel(x, y),
+                    width,
+                    above,
+                };
             }
-            size_t y = (first_white + last_white) / 2;
-            return Pixel(x, y);
         }
     }
 
-    Pixel getStartingPixel() const {
+    StartingPoint getStartingPoint() const {
         CenterPointOutLineIterator c = W;
         while (c.hasNext()) {
-            if (Pixel pixel = getStartingPixel(c.next()); pixel.isValid())
-                return pixel;
+            if (StartingPoint sp = getStartingPoint(c.next()))
+                return sp;
         }
         throw std::runtime_error("Error: no white pixels found");
     }

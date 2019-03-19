@@ -5,7 +5,7 @@
 
 using namespace std;
 
-TEST(GridMask, getStartingPixelFullLine) {
+TEST(GridMask, getStartingPointFullLine) {
     GridMask<4, 9> gm = {{{
         {0, 0, 1, 0},
         {0, 0, 1, 0},
@@ -18,12 +18,12 @@ TEST(GridMask, getStartingPixelFullLine) {
         {0, 0, 1, 0},
     }}};
 
-    Pixel result = gm.getStartingPixel(2);
-    Pixel expect = {2, 4};
-    ASSERT_EQ(result, expect);
+    auto result = gm.getStartingPoint(2);
+    ASSERT_EQ(result.pixel, Pixel(2, 4));
+    ASSERT_EQ(result.width, 9);
 }
 
-TEST(GridMask, getStartingPixelBottom) {
+TEST(GridMask, getStartingPointBottom) {
     GridMask<4, 9> gm = {{{
         {0, 0, 0, 0},
         {0, 0, 1, 0},
@@ -36,12 +36,13 @@ TEST(GridMask, getStartingPixelBottom) {
         {0, 0, 0, 0},
     }}};
 
-    Pixel result = gm.getStartingPixel(2);
-    Pixel expect = {2, 6};
-    ASSERT_EQ(result, expect);
+    auto result = gm.getStartingPoint(2);
+    ASSERT_EQ(result.pixel, Pixel(2, 6));
+    ASSERT_EQ(result.width, 3);
+    ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPixelBottomBorder) {
+TEST(GridMask, getStartingPointBottomBorder) {
     GridMask<4, 9> gm = {{{
         {0, 0, 1, 0},
         {0, 0, 1, 0},
@@ -54,12 +55,13 @@ TEST(GridMask, getStartingPixelBottomBorder) {
         {0, 0, 1, 0},
     }}};
 
-    Pixel result = gm.getStartingPixel(2);
-    Pixel expect = {2, 7};
-    ASSERT_EQ(result, expect);
+    auto result = gm.getStartingPoint(2);
+    ASSERT_EQ(result.pixel, Pixel(2, 7));
+    ASSERT_EQ(result.width, 3);
+    ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPixelTop) {
+TEST(GridMask, getStartingPointTop) {
     GridMask<4, 9> gm = {{{
         {0, 0, 0, 0},
         {0, 0, 1, 0},
@@ -72,12 +74,13 @@ TEST(GridMask, getStartingPixelTop) {
         {0, 0, 0, 0},
     }}};
 
-    Pixel result = gm.getStartingPixel(2);
-    Pixel expect = {2, 2};
-    ASSERT_EQ(result, expect);
+    auto result = gm.getStartingPoint(2);
+    ASSERT_EQ(result.pixel, Pixel(2, 2));
+    ASSERT_EQ(result.width, 3);
+    ASSERT_EQ(result.above, false);
 }
 
-TEST(GridMask, getStartingPixelTopBorder) {
+TEST(GridMask, getStartingPointTopBorder) {
     GridMask<4, 9> gm = {{{
         {0, 0, 1, 0},
         {0, 0, 1, 0},
@@ -90,12 +93,13 @@ TEST(GridMask, getStartingPixelTopBorder) {
         {0, 0, 1, 0},
     }}};
 
-    Pixel result = gm.getStartingPixel(2);
-    Pixel expect = {2, 1};
-    ASSERT_EQ(result, expect);
+    auto result = gm.getStartingPoint(2);
+    ASSERT_EQ(result.pixel, Pixel(2, 1));
+    ASSERT_EQ(result.width, 3);
+    ASSERT_EQ(result.above, false);
 }
 
-TEST(GridMask, getStartingPixelOtherColumnEvenLast) {
+TEST(GridMask, getStartingPointOtherColumnEvenLast) {
     GridMask<4, 6> gm = {{{
         {0, 0, 0, 0},
         {0, 0, 0, 0},
@@ -105,12 +109,13 @@ TEST(GridMask, getStartingPixelOtherColumnEvenLast) {
         {0, 0, 0, 1},
     }}};
 
-    Pixel result = gm.getStartingPixel();
-    Pixel expect = {3, 4};
-    ASSERT_EQ(result, expect);
+    auto result = gm.getStartingPoint();
+    ASSERT_EQ(result.pixel, Pixel(3, 4));
+    ASSERT_EQ(result.width, 3);
+    ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPixelOtherColumnEvenFirst) {
+TEST(GridMask, getStartingPointOtherColumnEvenFirst) {
     GridMask<4, 6> gm = {{{
         {0, 0, 0, 0},
         {0, 0, 0, 0},
@@ -120,12 +125,13 @@ TEST(GridMask, getStartingPixelOtherColumnEvenFirst) {
         {1, 0, 0, 0},
     }}};
 
-    Pixel result = gm.getStartingPixel();
-    Pixel expect = {0, 4};
-    ASSERT_EQ(result, expect);
+    auto result = gm.getStartingPoint();
+    ASSERT_EQ(result.pixel, Pixel(0, 4));
+    ASSERT_EQ(result.width, 3);
+    ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPixelOtherColumnOddFirst) {
+TEST(GridMask, getStartingPointOtherColumnOddFirst) {
     GridMask<5, 6> gm = {{{
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
@@ -135,12 +141,13 @@ TEST(GridMask, getStartingPixelOtherColumnOddFirst) {
         {1, 0, 0, 0, 0},
     }}};
 
-    Pixel result = gm.getStartingPixel();
-    Pixel expect = {0, 4};
-    ASSERT_EQ(result, expect);
+    auto result = gm.getStartingPoint();
+    ASSERT_EQ(result.pixel, Pixel(0, 4));
+    ASSERT_EQ(result.width, 3);
+    ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPixelOtherColumnOddLast) {
+TEST(GridMask, getStartingPointOtherColumnOddLast) {
     GridMask<5, 6> gm = {{{
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
@@ -150,12 +157,13 @@ TEST(GridMask, getStartingPixelOtherColumnOddLast) {
         {0, 0, 0, 0, 1},
     }}};
 
-    Pixel result = gm.getStartingPixel();
-    Pixel expect = {4, 4};
-    ASSERT_EQ(result, expect);
+    auto result = gm.getStartingPoint();
+    ASSERT_EQ(result.pixel, Pixel(4, 4));
+    ASSERT_EQ(result.width, 3);
+    ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPixelNoWhitePixels) {
+TEST(GridMask, getStartingPointNoWhitePixels) {
     GridMask<5, 6> gm = {{{
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
@@ -166,7 +174,7 @@ TEST(GridMask, getStartingPixelNoWhitePixels) {
     }}};
 
     try {
-        gm.getStartingPixel();
+        gm.getStartingPoint();
         FAIL();
     } catch (std::runtime_error &e) {
     }
@@ -277,12 +285,26 @@ TEST(GridMask, findLineAngleAccuratePI4) {
     EXPECT_TRUE(abs(result - expect) <= 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
 }
 
+TEST(GridMask, findLineAngleAccurateRandomAngle) {
+    GridMask<410, 308> gm = {};
+    Pixel center          = {410 / 2, 308 / 2};
+    double angle          = 23.0 / 17;
+    BresenhamLine line    = {center, angle, 410, 308};
+    while (line.hasNext())
+        gm.set(line.next());
+
+    double result = gm.findLineAngleAccurate(center);
+    double expect = angle;
+
+    EXPECT_TRUE(abs(result - expect) <= 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+}
+
 #include <CenterPointOutLineIterator.hpp>
 
 TEST(CenterPointOutLineIterator, CenterPointOutLineIteratorOdd) {
     CenterPointOutLineIterator c(7);
     vector<size_t> result;
-    while(c.hasNext())
+    while (c.hasNext())
         result.push_back(c.next());
     vector<size_t> expect = {3, 4, 2, 5, 1, 6, 0};
     ASSERT_EQ(result, expect);
@@ -291,7 +313,7 @@ TEST(CenterPointOutLineIterator, CenterPointOutLineIteratorOdd) {
 TEST(CenterPointOutLineIterator, CenterPointOutLineIteratorEven) {
     CenterPointOutLineIterator c(6);
     vector<size_t> result;
-    while(c.hasNext())
+    while (c.hasNext())
         result.push_back(c.next());
     vector<size_t> expect = {2, 3, 1, 4, 0, 5};
     ASSERT_EQ(result, expect);
