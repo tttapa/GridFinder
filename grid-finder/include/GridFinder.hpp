@@ -1,17 +1,15 @@
 #pragma once
 
-#include <Matrix.hpp>
-#include <cstdint>
-
-#include <limits>
-
-#include <iostream>
-
+#include <ANSIColors.hpp>
 #include <Bresenham.hpp>
 #include <CenterPointOutLineIterator.hpp>
-
+#include <Matrix.hpp>
 #include <algorithm>  // max_element
+#include <cstdint>
+#include <iostream>
+#include <limits>
 
+using std::cerr;
 using std::cout;
 using std::endl;
 
@@ -293,24 +291,29 @@ class GridMask {
     static const size_t MAX_GAP = 10;
 
     size_t getWidthAtPointOnLine(Pixel pixel, int cos, int sin,
+                                 size_t max_gap = MAX_GAP,
                                  bool plus90deg = true) {
         BresenhamLine alongLine = {pixel, cos, sin, W, H};
         auto [cosPerp, sinPerp] = getPerpendicularCosSin(cos, sin, plus90deg);
         size_t maxWidth         = 0;
-        // Follow a path along the given line for MAX_GAP pixels
-        for (size_t i = 0; i <= MAX_GAP && alongLine.hasNext(); ++i) {
+        // Follow a path along the given line for max_gap pixels
+        for (size_t i = 0; i <= max_gap && alongLine.hasNext(); ++i) {
             // For each pixel along this path, move away from the line,
             // perpendicular to it, untill you find a black pixel, or until you
             // fall off the canvas.
             BresenhamLine perpendicular = {alongLine.next(), cosPerp, sinPerp,
                                            W, H};
-            while (perpendicular.hasNext()) {
+            size_t ctr                  = 0;
+            while (perpendicular.hasNext() && ++ctr < 64) {
                 Pixel pixel = perpendicular.next();
                 cout << pixel << " - ";
                 if (get(pixel) == 0x00)
                     break;
             }
             cout << (perpendicular.getCurrentLength() - 1) << endl;
+            if (ctr >= 64)
+                cerr << ANSIColors::redb << "endless loop" << endl
+                     << ANSIColors::reset;
 
             // If we found a black pixel before going off the canvas
             if (perpendicular.getCurrentLength() > maxWidth)
@@ -321,11 +324,60 @@ class GridMask {
         return maxWidth - 1;
     }
 
+    Pixel getMiddle(Pixel pointOnLine, int cos, int sin,
+                    size_t max_gap = MAX_GAP) {
+        auto [ocos, osin] = getOppositeCosSin(cos, sin);
+        cout << " cos = " << cos << endl;
+        cout << " sin = " << sin << endl;
+        cout << "ocos = " << ocos << endl;
+        cout << "osin = " << osin << endl;
+        cout << "widthUpper1" << endl;
+        size_t widthUpper1 =
+            getWidthAtPointOnLine(pointOnLine, cos, sin, max_gap / 2, true);
+        cout << ANSIColors::blackb << "widthUpper1 = " << widthUpper1
+             << ANSIColors::reset << endl;
+        cout << "widthLower1" << endl;
+        size_t widthLower1 =
+            getWidthAtPointOnLine(pointOnLine, cos, sin, max_gap / 2, false);
+        cout << ANSIColors::blackb << "widthLower1 = " << widthLower1
+             << ANSIColors::reset << endl;
+        cout << "widthUpper2" << endl;
+        size_t widthUpper2 =
+            getWidthAtPointOnLine(pointOnLine, ocos, osin, max_gap / 2, false);
+        cout << ANSIColors::blackb << "widthUpper2 = " << widthUpper2
+             << ANSIColors::reset << endl;
+        cout << "widthLower2" << endl;
+        size_t widthLower2 =
+            getWidthAtPointOnLine(pointOnLine, ocos, osin, max_gap / 2, true);
+        cout << ANSIColors::blackb << "widthLower2 = " << widthLower2
+             << ANSIColors::reset << endl;
+
+        int middlePointCorrection = std::max(widthUpper1, widthUpper2) -
+                                    std::max(widthLower1, widthLower2);
+        cout << "middlePointCorrection = " << middlePointCorrection << endl;
+
+        auto [corrCos, corrSin] =
+            getPerpendicularCosSin(cos, sin, middlePointCorrection > 0);
+        BresenhamLine corr = {pointOnLine, corrCos, corrSin, W, H};
+        Pixel middle       = pointOnLine;
+        size_t middlePointCorrectionDistance =
+            std::abs(middlePointCorrection)  / 2;
+        while (corr.hasNext() &&
+               corr.getCurrentLength() <= middlePointCorrectionDistance)
+            middle = corr.next();
+        return middle;
+    }
+
     template <class T>
     std::tuple<T, T> getPerpendicularCosSin(T cos, T sin,
                                             bool plus90deg = true) {
         return plus90deg ? std::tuple<T, T>{-sin, cos}
                          : std::tuple<T, T>{sin, -cos};
+    }
+
+    template <class T>
+    std::tuple<T, T> getOppositeCosSin(T cos, T sin) {
+        return {-cos, -sin};
     }
 
     double static getPerpendicularAngle(double angle) {
