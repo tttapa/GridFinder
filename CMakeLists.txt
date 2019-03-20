@@ -84,6 +84,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory("matrix")
 add_subdirectory("grid-finder")
+add_subdirectory("utilities")
 add_subdirectory("py-matrix")
 add_subdirectory("py-grid-finder")
 

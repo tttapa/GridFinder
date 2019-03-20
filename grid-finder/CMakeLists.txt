@@ -31,6 +31,7 @@ target_compile_features(grid_finder PUBLIC cxx_std_17)
 target_link_libraries(grid_finder 
     PUBLIC 
         matrix
+        utilities
 )
 
 # Run CMake again in the `test` folder, to discover the CMakeLists.txt file that

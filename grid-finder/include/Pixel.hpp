@@ -12,7 +12,8 @@ struct Pixel {
         return this->x == other.x && this->y == other.y;
     }
     bool inRange(size_t w, size_t h) const {
-        return (size_t) x < w && (size_t) y < h;
+        // Unsigned comparison also checks for >= 0
+        return x < w && y < h;
     }
 };
 
