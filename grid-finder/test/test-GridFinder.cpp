@@ -553,7 +553,7 @@ TEST(GridMask, getMiddleVertical) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getMiddleDiagonal) {
+TEST(GridMask, getMiddleDiagonalAbove) {
     GridMask<9, 9> gm = {{{
         {1, 1, 1, 0, 0, 0, 0, 0, 0},
         {1, 1, 1, 1, 0, 0, 0, 0, 0},
@@ -579,8 +579,36 @@ TEST(GridMask, getMiddleDiagonal) {
 
     Pixel result = gm.getMiddle(pixel, cos, sin, 4);
     Pixel expect = {4, 4};
-    // Row column 4 is the center of the horizontal line with thickness 7
-    // The white pixel in (0, 1) is excluded by the small max_gap of 4
+
+    EXPECT_EQ(result, expect);
+}
+
+TEST(GridMask, getMiddleDiagonalBelow) {
+    GridMask<9, 9> gm = {{{
+        {1, 1, 1, 0, 0, 0, 0, 0, 0},
+        {1, 1, 1, 1, 0, 0, 0, 0, 0},
+        {1, 1, 1, 1, 1, 0, 1, 0, 0},
+        {0, 1, 1, 1, 1, 1, 0, 0, 0},
+        {0, 0, 1, 1, 1, 1, 1, 0, 0},
+        {0, 0, 0, 1, 1, 1, 1, 1, 0},
+        {0, 0, 1, 0, 1, 1, 1, 1, 1},
+        {0, 0, 0, 0, 0, 1, 1, 1, 1},
+        {0, 0, 0, 0, 0, 0, 1, 1, 1},
+    }}};
+
+    int cos     = BresenhamLine::cos(M_PI_4);
+    int sin     = BresenhamLine::sin(M_PI_4);
+    Pixel pixel = {5, 3};
+
+    GridMask<9, 9> gm_draw = {};
+    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    while (l.hasNext())
+        gm_draw.set(l.next());
+    gm_draw.print(cout) << endl;
+    gm.print(cout);
+
+    Pixel result = gm.getMiddle(pixel, cos, sin, 4);
+    Pixel expect = {4, 4};
 
     EXPECT_EQ(result, expect);
 }
