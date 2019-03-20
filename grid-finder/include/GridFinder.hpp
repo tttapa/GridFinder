@@ -290,6 +290,8 @@ class GridMask {
     // static const size_t MAX_GAP = (W + H) / 2 / 10;
     static const size_t MAX_GAP = 10;
 
+    static const size_t maxLineWidth = 32;
+
     size_t getWidthAtPointOnLine(Pixel pixel, int cos, int sin,
                                  size_t max_gap = MAX_GAP,
                                  bool plus90deg = true) {
@@ -302,16 +304,17 @@ class GridMask {
             // For each pixel along this path, move away from the line,
             // perpendicular to it, untill you find a black pixel, or until you
             // fall off the canvas.
-            BresenhamLine perpendicular = {pixelAlongLine, cosPerp, sinPerp,
-                                           W, H};
-            size_t ctr                  = 0;
-            while (perpendicular.hasNext() && ++ctr < 64) {
+            BresenhamLine perpendicular = {pixelAlongLine, cosPerp, sinPerp, W,
+                                           H};
+            while (perpendicular.hasNext() &&
+                   perpendicular.getCurrentLength() < maxLineWidth) {
                 Pixel pixel = perpendicular.next();
                 if (get(pixel) == 0x00)
                     break;
             }
-            if (ctr >= 64)
-                throw std::runtime_error("Error: Endless loop detected");
+            if (perpendicular.getCurrentLength() >= maxLineWidth)
+                // throw std::runtime_error("Error: Endless loop detected");
+                return maxLineWidth;
 
             // If we found a black pixel before going off the canvas
             if (perpendicular.getCurrentLength() > maxWidth)
@@ -334,8 +337,13 @@ class GridMask {
         size_t widthLower2 =
             getWidthAtPointOnLine(pointOnLine, ocos, osin, max_gap / 2, true);
 
-        int middlePointCorrection = std::max(widthUpper1, widthUpper2) -
-                                    std::max(widthLower1, widthLower2);
+        size_t widthUpper = std::max(widthUpper1, widthUpper2);
+        size_t widthLower = std::max(widthLower1, widthLower2);
+
+        if (widthUpper >= maxLineWidth || widthLower >= maxLineWidth)
+            return Pixel();  // return invalid pixel
+
+        int middlePointCorrection = widthUpper - widthLower;
 
         bool corrDirection = middlePointCorrection > 0;
         auto [corrCos, corrSin] =
@@ -394,6 +402,22 @@ class GridMask {
             os << "\r\n";
         }
         return os;
+    }
+
+    size_t drawLine(Pixel pixel, int cos, int sin) {
+        BresenhamLine line = {pixel, cos, sin, W, H};
+        return drawLine(line);
+    }
+
+    size_t drawLine(BresenhamLine line) {
+        while (line.hasNext())
+            set(line.next());
+        return line.getCurrentLength();
+    }
+
+    size_t drawLine(Pixel pixel, double angle) {
+        BresenhamLine line = {pixel, angle, W, H};
+        return drawLine(line);
     }
 
   private:

@@ -613,6 +613,28 @@ TEST(GridMask, getMiddleDiagonalBelow) {
     EXPECT_EQ(result, expect);
 }
 
+TEST(GridMask, getMiddleCross) {
+    GridMask<80, 80> gm = {};
+
+    int cos     = BresenhamLine::cos(M_PI_4);
+    int sin     = BresenhamLine::sin(M_PI_4);
+    auto [pcos, psin] = gm.getPerpendicularCosSin(cos, sin);
+
+    for (size_t i = 0; i < 4; ++i) {
+        gm.drawLine({0, i}, cos, sin);
+        gm.drawLine({i, 0}, cos, sin);
+        gm.drawLine({79, i}, pcos, psin);
+        gm.drawLine({79-i, 0}, pcos, psin);
+    }
+
+    gm.print(cout);
+
+    Pixel pixel = {40, 40};
+    Pixel result = gm.getMiddle(pixel, cos, sin, 4);
+
+    EXPECT_FALSE(result.isValid());
+}
+
 TEST(GridMask, averageAngle) {
     using GM   = GridMask<1, 1>;
     double eps = 2 * M_PI * numeric_limits<double>::epsilon();
