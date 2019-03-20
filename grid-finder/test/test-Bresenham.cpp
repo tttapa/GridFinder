@@ -11,7 +11,6 @@ TEST(BresenhamLine, lowPosXPosY) {
     while (line.hasNext()) {
         Pixel px = line.next();
         result.push_back(px);
-        cout << px << endl;
     }
 
     vector<Pixel> expect = {
@@ -32,7 +31,6 @@ TEST(BresenhamLine, highPosXPosY) {
     while (line.hasNext()) {
         Pixel px = line.next();
         result.push_back(px);
-        cout << px << endl;
     }
 
     vector<Pixel> expect = {
@@ -53,7 +51,6 @@ TEST(BresenhamLine, NegXPosY) {
     while (line.hasNext()) {
         Pixel px = line.next();
         result.push_back(px);
-        cout << px << endl;
     }
 
     vector<Pixel> expect = {
@@ -74,7 +71,6 @@ TEST(BresenhamLine, lowNegXPosY) {
     while (line.hasNext()) {
         Pixel px = line.next();
         result.push_back(px);
-        cout << px << endl;
     }
 
     vector<Pixel> expect = {
@@ -95,7 +91,6 @@ TEST(BresenhamLine, lowNegXNegY) {
     while (line.hasNext()) {
         Pixel px = line.next();
         result.push_back(px);
-        cout << px << endl;
     }
 
     vector<Pixel> expect = {
@@ -116,7 +111,6 @@ TEST(BresenhamLine, highNegXNegY) {
     while (line.hasNext()) {
         Pixel px = line.next();
         result.push_back(px);
-        cout << px << endl;
     }
 
     vector<Pixel> expect = {
@@ -137,7 +131,6 @@ TEST(BresenhamLine, highPosXNegY) {
     while (line.hasNext()) {
         Pixel px = line.next();
         result.push_back(px);
-        cout << px << endl;
     }
 
     vector<Pixel> expect = {
@@ -158,7 +151,6 @@ TEST(BresenhamLine, lowPosXNegY) {
     while (line.hasNext()) {
         Pixel px = line.next();
         result.push_back(px);
-        cout << px << endl;
     }
 
     vector<Pixel> expect = {

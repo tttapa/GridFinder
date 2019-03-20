@@ -298,22 +298,20 @@ class GridMask {
         size_t maxWidth         = 0;
         // Follow a path along the given line for max_gap pixels
         for (size_t i = 0; i <= max_gap && alongLine.hasNext(); ++i) {
+            Pixel pixelAlongLine = alongLine.next();
             // For each pixel along this path, move away from the line,
             // perpendicular to it, untill you find a black pixel, or until you
             // fall off the canvas.
-            BresenhamLine perpendicular = {alongLine.next(), cosPerp, sinPerp,
+            BresenhamLine perpendicular = {pixelAlongLine, cosPerp, sinPerp,
                                            W, H};
             size_t ctr                  = 0;
             while (perpendicular.hasNext() && ++ctr < 64) {
                 Pixel pixel = perpendicular.next();
-                cout << pixel << " - ";
                 if (get(pixel) == 0x00)
                     break;
             }
-            cout << (perpendicular.getCurrentLength() - 1) << endl;
             if (ctr >= 64)
-                cerr << ANSIColors::redb << "endless loop" << endl
-                     << ANSIColors::reset;
+                throw std::runtime_error("Error: Endless loop detected");
 
             // If we found a black pixel before going off the canvas
             if (perpendicular.getCurrentLength() > maxWidth)
@@ -327,41 +325,26 @@ class GridMask {
     Pixel getMiddle(Pixel pointOnLine, int cos, int sin,
                     size_t max_gap = MAX_GAP) {
         auto [ocos, osin] = getOppositeCosSin(cos, sin);
-        cout << " cos = " << cos << endl;
-        cout << " sin = " << sin << endl;
-        cout << "ocos = " << ocos << endl;
-        cout << "osin = " << osin << endl;
-        cout << "widthUpper1" << endl;
         size_t widthUpper1 =
             getWidthAtPointOnLine(pointOnLine, cos, sin, max_gap / 2, true);
-        cout << ANSIColors::blackb << "widthUpper1 = " << widthUpper1
-             << ANSIColors::reset << endl;
-        cout << "widthLower1" << endl;
         size_t widthLower1 =
             getWidthAtPointOnLine(pointOnLine, cos, sin, max_gap / 2, false);
-        cout << ANSIColors::blackb << "widthLower1 = " << widthLower1
-             << ANSIColors::reset << endl;
-        cout << "widthUpper2" << endl;
         size_t widthUpper2 =
             getWidthAtPointOnLine(pointOnLine, ocos, osin, max_gap / 2, false);
-        cout << ANSIColors::blackb << "widthUpper2 = " << widthUpper2
-             << ANSIColors::reset << endl;
-        cout << "widthLower2" << endl;
         size_t widthLower2 =
             getWidthAtPointOnLine(pointOnLine, ocos, osin, max_gap / 2, true);
-        cout << ANSIColors::blackb << "widthLower2 = " << widthLower2
-             << ANSIColors::reset << endl;
 
         int middlePointCorrection = std::max(widthUpper1, widthUpper2) -
                                     std::max(widthLower1, widthLower2);
-        cout << "middlePointCorrection = " << middlePointCorrection << endl;
 
+        bool corrDirection = middlePointCorrection > 0;
         auto [corrCos, corrSin] =
-            getPerpendicularCosSin(cos, sin, middlePointCorrection > 0);
+            getPerpendicularCosSin(cos, sin, corrDirection);
+        size_t middlePointCorrectionDistance =
+            std::abs(middlePointCorrection) / 2;
+
         BresenhamLine corr = {pointOnLine, corrCos, corrSin, W, H};
         Pixel middle       = pointOnLine;
-        size_t middlePointCorrectionDistance =
-            std::abs(middlePointCorrection)  / 2;
         while (corr.hasNext() &&
                corr.getCurrentLength() <= middlePointCorrectionDistance)
             middle = corr.next();
