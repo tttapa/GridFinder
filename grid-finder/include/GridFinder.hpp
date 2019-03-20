@@ -178,17 +178,15 @@ class GridMask {
         std::array<HoughResult, HOUGH_ANGLE_RESOLUTION> houghRes;
         double step = 2 * M_PI / HOUGH_ANGLE_RESOLUTION;
         for (size_t i = 0; i < HOUGH_ANGLE_RESOLUTION; ++i)
-            houghRes[i] = hough(px, step * i);
+            houghRes.at(i) = hough(px, step * i);
         return std::max_element(houghRes.begin(), houghRes.end())->angle;
     }
 
     double findLineAngleAccurate(Pixel px) {
         std::array<HoughResult, HOUGH_ANGLE_RESOLUTION> houghRes;
         double step = 2 * M_PI / HOUGH_ANGLE_RESOLUTION;
-        for (size_t i = 0; i < HOUGH_ANGLE_RESOLUTION; ++i) {
-            houghRes[i] = hough(px, step * i);
-            // cout << houghRes[i].angle << ", " << houghRes[i].count << endl;
-        }
+        for (size_t i = 0; i < HOUGH_ANGLE_RESOLUTION; ++i)
+            houghRes.at(i) = hough(px, step * i);
         auto max       = std::max_element(houghRes.begin(), houghRes.end());
         auto first_max = max;
         auto last_max  = max;
@@ -215,6 +213,78 @@ class GridMask {
         return averageAngle(first_max->angle, last_max->angle);
     }
 
+    template <size_t N>
+    double findLineAngleAccurateRange(Pixel px, double centerAngle) {
+        static_assert(2 * N < HOUGH_ANGLE_RESOLUTION);
+        std::array<HoughResult, 2 * N + 1> houghRes;
+        double step             = 2 * M_PI / HOUGH_ANGLE_RESOLUTION;
+        size_t centerAngleIndex = round(centerAngle / step);
+
+        // If the range contains no discontinuities
+        // ├───┬───┬───╤═══╤═══╤═══╪═══╤═══╤═══╤───┬───┬───┤
+        // 0          C-N          C          C+N         R-1
+        // C = center
+        // N = number of steps around the center
+        // R = resolution (R steps = 360°)
+        if (centerAngleIndex - N < HOUGH_ANGLE_RESOLUTION &&
+            centerAngleIndex + N < HOUGH_ANGLE_RESOLUTION) {
+            size_t initialAngleIndex = centerAngleIndex - N;
+            for (size_t i = 0; i <= 2 * N; ++i)
+                houghRes.at(i) = hough(px, step * (initialAngleIndex + i));
+        }
+        // If the 0-2PI discontinuity is in the first part of the range
+        // (< centerAngle)
+        // ╞═══╪═══╤═══╤═══╤───┬───┬───┬───┬───┬───┬───╤═══╡
+        // 0   C          C+N                         C-N R-1
+        else if (centerAngleIndex + N < HOUGH_ANGLE_RESOLUTION) {
+            size_t initialAngleIndex =
+                HOUGH_ANGLE_RESOLUTION + centerAngleIndex - N;
+            size_t i = 0;
+            for (size_t j = initialAngleIndex; j < HOUGH_ANGLE_RESOLUTION;
+                 ++i, ++j)
+                houghRes.at(i) = hough(px, step * j);
+            for (size_t j = 0; j <= centerAngleIndex + N; ++i, ++j)
+                houghRes.at(i) = hough(px, step * j);
+        }
+        // If the 0-2PI discontinuity is in the second part of the range
+        // (< centerAngle)
+        // ╞═══╤───┬───┬───┬───┬───┬───┬───╤═══╤═══╤═══╪═══╡
+        // 0  C+N                         C-N          C  R-1
+        else if (centerAngleIndex - N < HOUGH_ANGLE_RESOLUTION) {
+            size_t initialAngleIndex = centerAngleIndex - N;
+            size_t i                 = 0;
+            for (size_t j = initialAngleIndex; j < HOUGH_ANGLE_RESOLUTION;
+                 ++i, ++j)
+                houghRes.at(i) = hough(px, step * j);
+            for (size_t j = 0;
+                 j <= N + centerAngleIndex - HOUGH_ANGLE_RESOLUTION; ++i, ++j)
+                houghRes.at(i) = hough(px, step * j);
+        } else {
+            assert(false);
+        }
+        // If there are multiple elements with the same maximum count,
+        // max_element will return an iterator to the first element with this
+        // count
+        auto first_max = std::max_element(houghRes.begin(), houghRes.end());
+        // Find the first element after the first maximum that has a lower count
+        // and then subtract one to get the last element that has the maximum
+        // count
+        // If no element with a lower count is found, find_if returns
+        // houghRes.end(), which means that last_max will be an iterator to
+        // the last element of the array.
+        auto last_max = std::find_if(first_max, houghRes.end(), [&](auto res) {
+            return res.count < first_max->count;
+        });
+        if (first_max == houghRes.begin() || last_max == houghRes.end())
+            cerr << ANSIColors::red
+                 << "Warning: angle with maximum count could lie outside of "
+                    "the specified range\r\n"
+                 << ANSIColors::reset;
+        --last_max;
+
+        return averageAngle(first_max->angle, last_max->angle);
+    }
+
     /**
      * @brief   The maximum number of pixels that can be black within a line,
      *          while still being detected correctly.
@@ -222,9 +292,10 @@ class GridMask {
     // static const size_t MAX_GAP = (W + H) / 2 / 10;
     static const size_t MAX_GAP = 10;
 
-    size_t getWidthAtPointOnLine(Pixel pixel, int cos, int sin) {
+    size_t getWidthAtPointOnLine(Pixel pixel, int cos, int sin,
+                                 bool plus90deg = true) {
         BresenhamLine alongLine = {pixel, cos, sin, W, H};
-        auto [cosPerp, sinPerp] = getPerpendicularCosSin(cos, sin);
+        auto [cosPerp, sinPerp] = getPerpendicularCosSin(cos, sin, plus90deg);
         size_t maxWidth         = 0;
         // Follow a path along the given line for MAX_GAP pixels
         for (size_t i = 0; i <= MAX_GAP && alongLine.hasNext(); ++i) {
@@ -233,20 +304,16 @@ class GridMask {
             // fall off the canvas.
             BresenhamLine perpendicular = {alongLine.next(), cosPerp, sinPerp,
                                            W, H};
-            bool success                = false;
-            // success == true if black pixel found, false if off canvas
             while (perpendicular.hasNext()) {
                 Pixel pixel = perpendicular.next();
                 cout << pixel << " - ";
-                if (get(pixel) == 0x00) {
-                    success = true;
+                if (get(pixel) == 0x00)
                     break;
-                }
             }
             cout << (perpendicular.getCurrentLength() - 1) << endl;
 
             // If we found a black pixel before going off the canvas
-            if (success && perpendicular.getCurrentLength() > maxWidth)
+            if (perpendicular.getCurrentLength() > maxWidth)
                 // getCurrentLength() gives the length to the first black pixel,
                 // so that's one pixel too much. Fix at the end of the function.
                 maxWidth = perpendicular.getCurrentLength();
@@ -255,11 +322,13 @@ class GridMask {
     }
 
     template <class T>
-    std::tuple<T, T> getPerpendicularCosSin(T cos, T sin) {
-        return {-sin, cos};
+    std::tuple<T, T> getPerpendicularCosSin(T cos, T sin,
+                                            bool plus90deg = true) {
+        return plus90deg ? std::tuple<T, T>{-sin, cos}
+                         : std::tuple<T, T>{sin, -cos};
     }
 
-    double static getPerpendicularAngle(double angle, bool above) {
+    double static getPerpendicularAngle(double angle) {
         return normalizeAngle(angle + M_PI_2);
     }
 

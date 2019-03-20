@@ -1,7 +1,6 @@
+#include <Degrees.hpp>
 #include <GridFinder.hpp>
 #include <gtest/gtest.h>
-
-#include <fstream>
 
 using namespace std;
 
@@ -315,6 +314,60 @@ TEST(GridMask, findLineAngleAccurateRandomAngle) {
     EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
 }
 
+TEST(GridMask, findLineAngleAccurateRange110) {
+    constexpr size_t W = 160;
+    constexpr size_t H = 90;
+    GridMask<W, H> gm  = {};
+    Pixel center       = {W / 2, H / 2};
+    double angle       = 110_deg;
+    BresenhamLine line = {center, angle, W, H};
+    while (line.hasNext())
+        gm.set(line.next());
+
+    // gm.print(cout);
+
+    double result = gm.findLineAngleAccurateRange<45>(center, angle);
+    double expect = angle;
+
+    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+}
+
+TEST(GridMask, findLineAngleAccurateRange20) {
+    constexpr size_t W = 160;
+    constexpr size_t H = 90;
+    GridMask<W, H> gm  = {};
+    Pixel center       = {W / 2, H / 2};
+    double angle       = 20_deg;
+    BresenhamLine line = {center, angle, W, H};
+    while (line.hasNext())
+        gm.set(line.next());
+
+    // gm.print(cout);
+
+    double result = gm.findLineAngleAccurateRange<45>(center, angle);
+    double expect = angle;
+
+    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+}
+
+TEST(GridMask, findLineAngleAccurateRange340) {
+    constexpr size_t W = 160;
+    constexpr size_t H = 90;
+    GridMask<W, H> gm  = {};
+    Pixel center       = {W / 2, H / 2};
+    double angle       = 340_deg;
+    BresenhamLine line = {center, angle, W, H};
+    while (line.hasNext())
+        gm.set(line.next());
+
+    // gm.print(cout);
+
+    double result = gm.findLineAngleAccurateRange<45>(center, angle);
+    double expect = angle;
+
+    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+}
+
 TEST(GridMask, getWidth) {
     GridMask<9, 7> gm = {{{
         {0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -343,8 +396,6 @@ TEST(GridMask, getWidth) {
 
     EXPECT_EQ(result, expect);
 }
-
-#include <Degrees.hpp>
 
 TEST(GridMask, getWidth45) {
     GridMask<9, 9> gm = {{{
@@ -376,7 +427,6 @@ TEST(GridMask, getWidth45) {
 
     EXPECT_EQ(result, expect);
 }
-
 
 TEST(GridMask, getWidth135) {
     GridMask<9, 9> gm = {{{
