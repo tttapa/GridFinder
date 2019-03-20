@@ -346,6 +346,100 @@ TEST(GridMask, getWidth) {
 
 #include <Degrees.hpp>
 
+TEST(GridMask, getWidth45) {
+    GridMask<9, 9> gm = {{{
+        {1, 1, 1, 0, 0, 0, 0, 0, 0},
+        {1, 1, 1, 1, 0, 0, 0, 0, 0},
+        {1, 1, 1, 1, 1, 0, 0, 0, 0},
+        {0, 1, 1, 1, 1, 1, 0, 0, 0},
+        {0, 0, 1, 1, 1, 1, 1, 0, 0},
+        {0, 0, 0, 1, 1, 1, 1, 1, 0},
+        {0, 0, 1, 0, 1, 1, 1, 1, 1},
+        {0, 0, 0, 0, 0, 1, 1, 1, 1},
+        {0, 0, 0, 0, 0, 0, 1, 1, 1},
+    }}};
+
+    int cos     = BresenhamLine::cos(45_deg);
+    int sin     = BresenhamLine::sin(45_deg);
+    Pixel pixel = {0, 0};
+
+    GridMask<9, 9> gm_draw = {};
+    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    while (l.hasNext())
+        gm_draw.set(l.next());
+    gm_draw.print(cout) << endl;
+    gm.print(cout);
+
+    size_t result = gm.getWidthAtPointOnLine(pixel, cos, sin);
+    size_t expect = 3;
+    // (7, 5) has a width of 3, starting from the base line through (7, 3)
+
+    EXPECT_EQ(result, expect);
+}
+
+
+TEST(GridMask, getWidth135) {
+    GridMask<9, 9> gm = {{{
+        {0, 0, 0, 0, 0, 0, 1, 1, 1},
+        {0, 0, 0, 0, 0, 1, 1, 1, 1},
+        {0, 0, 1, 0, 1, 1, 1, 1, 1},
+        {0, 0, 0, 1, 1, 1, 1, 1, 0},
+        {0, 0, 1, 1, 1, 1, 1, 0, 0},
+        {0, 1, 1, 1, 1, 1, 0, 0, 0},
+        {1, 1, 1, 1, 1, 0, 0, 0, 0},
+        {1, 1, 1, 1, 0, 0, 0, 0, 0},
+        {1, 1, 1, 0, 0, 0, 0, 0, 0},
+    }}};
+
+    int cos     = BresenhamLine::cos(135_deg);
+    int sin     = BresenhamLine::sin(135_deg);
+    Pixel pixel = {8, 0};
+
+    GridMask<9, 9> gm_draw = {};
+    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    while (l.hasNext())
+        gm_draw.set(l.next());
+    gm_draw.print(cout) << endl;
+    gm.print(cout);
+
+    size_t result = gm.getWidthAtPointOnLine(pixel, cos, sin);
+    size_t expect = 3;
+    // (7, 5) has a width of 3, starting from the base line through (7, 3)
+
+    EXPECT_EQ(result, expect);
+}
+
+TEST(GridMask, getWidth225) {
+    GridMask<9, 9> gm = {{{
+        {1, 1, 1, 0, 0, 0, 0, 0, 0},
+        {1, 1, 1, 1, 0, 0, 0, 0, 0},
+        {1, 1, 1, 1, 1, 0, 1, 0, 0},
+        {0, 1, 1, 1, 1, 1, 0, 0, 0},
+        {0, 0, 1, 1, 1, 1, 1, 0, 0},
+        {0, 0, 0, 1, 1, 1, 1, 1, 0},
+        {0, 0, 0, 0, 1, 1, 1, 1, 1},
+        {0, 0, 0, 0, 0, 1, 1, 1, 1},
+        {0, 0, 0, 0, 0, 0, 1, 1, 1},
+    }}};
+
+    int cos     = BresenhamLine::cos(225_deg);
+    int sin     = BresenhamLine::sin(225_deg);
+    Pixel pixel = {8, 8};
+
+    GridMask<9, 9> gm_draw = {};
+    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    while (l.hasNext())
+        gm_draw.set(l.next());
+    gm_draw.print(cout) << endl;
+    gm.print(cout);
+
+    size_t result = gm.getWidthAtPointOnLine(pixel, cos, sin);
+    size_t expect = 3;
+    // (7, 5) has a width of 3, starting from the base line through (7, 3)
+
+    EXPECT_EQ(result, expect);
+}
+
 TEST(GridMask, averageAngle) {
     using GM   = GridMask<1, 1>;
     double eps = 2 * M_PI * numeric_limits<double>::epsilon();

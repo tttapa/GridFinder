@@ -15,7 +15,12 @@ BresenhamLine::BresenhamLine(Pixel start, int cos, int sin, size_t w, size_t h)
       xinc(sgn(dx)), yinc(sgn(dy)),          // increment steps for x and y
       steep(ady > adx),  // whether to increment x or y on each iteration
       w(w), h(h)         // size of the canvas
-{}
+{
+    if (steep)
+        error = (adx - ady) / 2;
+    else
+        error = (ady - adx) / 2;
+}
 
 bool BresenhamLine::hasNext() const { return px.inRange(w, h); }
 

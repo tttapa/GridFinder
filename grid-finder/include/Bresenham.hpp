@@ -31,6 +31,6 @@ class BresenhamLine {
     int xinc, yinc;
     bool steep;
     size_t w, h;
-    int error = -errorScalingFactor / 2;
+    int error;
     size_t length = 0;
 };

@@ -4,8 +4,8 @@
 
 class CenterPointOutLineIterator {
   public:
-    CenterPointOutLineIterator(size_t height)
-        : height(height), center((height - 1) / 2), x(center) {}
+    CenterPointOutLineIterator(size_t length)
+        : length(length), center((length - 1) / 2), x(center) {}
 
     size_t next() {
         size_t result = x;
@@ -15,14 +15,14 @@ class CenterPointOutLineIterator {
         return result;
     }
 
-    bool hasNext() const { return x < height; }
+    bool hasNext() const { return x < length; }
 
     size_t getCenter() const {
         return center;
     }
 
   private:
-    const size_t height;
+    const size_t length;
     const size_t center;
     size_t x;
 };

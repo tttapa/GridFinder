@@ -286,7 +286,7 @@ class GridMask {
     std::ostream &print(std::ostream &os) {
         for (size_t y = 0; y < H; ++y) {
             for (size_t x = 0; x < W; ++x)
-                os << (get(x, y) ? "\xe2\xac\xa4 " : "\xe2\x97\xaf ");
+                os << (get(x, y) ? "⬤ " : "◯ ");
             os << "\r\n";
         }
         return os;
