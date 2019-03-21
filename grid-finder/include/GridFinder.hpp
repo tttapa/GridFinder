@@ -179,6 +179,7 @@ class GridMask {
     }
 
     HoughResult findLineAngleAccurate(Pixel px) {
+        cout << "findLineAngleAccurate(" << px << ")" << endl;
         std::array<HoughResult, angle_t::resolution()> houghRes;
         for (size_t i = 0; i < angle_t::resolution(); ++i)
             houghRes.at(i) = hough(px, i);
@@ -204,6 +205,10 @@ class GridMask {
             if (first_max == max)
                 break;
         }
+
+        cout << "first_max = " <<first_max->angle << endl;
+        cout << "last_max = " <<last_max->angle << endl;
+        cout << "count = " << max->count << endl;
 
         return {
             angle_t::average(first_max->angle, last_max->angle),
@@ -373,15 +378,15 @@ class GridMask {
     // far should we jump along the line before trying again.
     constexpr static size_t RETRY_JUMP_DISTANCE = (W + H) / 20;  // TODO
 
-    struct GetFirstLineResult {
+    struct LineResult {
         Pixel lineCenter;
         size_t width;
         CosSin angle;
     };
-    GetFirstLineResult getFirstLine() {
+    LineResult getFirstLine() {
         auto start              = getStartingPoint();
         HoughResult firstResult = findLineAngle(start.pixel);
-        angle_t firstAngle       = firstResult.angle;
+        angle_t firstAngle      = firstResult.angle;
         // There could be noise, so the first "line" could be just a white
         // bit of noise
         // TODO
@@ -410,6 +415,85 @@ class GridMask {
             middle.width,
             result1.count >= result2.count ? result1.angle : result2.angle,
         };
+    }
+
+    Pixel move(Pixel start, CosSin angle, size_t distance) {
+        BresenhamLine path = {start, angle, W, H};
+        Pixel end;
+        while (path.hasNext() &&
+               path.getCurrentLength() <= distance)  // TODO: OBOE?
+            end = path.next();
+        return end;
+    }
+
+    LineResult findNextLine(LineResult line) {
+        CosSin perp       = line.angle.perpendicular();
+        Pixel searchStart = line.lineCenter;
+        Pixel searchResult;
+        do {
+            searchStart = move(searchStart, perp, 2 * line.width);
+            searchResult =
+                findWhiteAlongLine(searchStart, line.angle, 2 * line.width / 3);
+            cout << "searchResult = " << searchResult << endl;
+        } while (!searchResult.isValid());  // TODO: end loop somehow
+
+        HoughResult angleResult = findLineAngleAccurate(searchResult);
+        angle_t angle           = angleResult.angle;
+        cout << "angle = " << angle << endl;
+        // There could be noise, so the first "line" could be just a white
+        // bit of noise
+        // TODO
+        if (angleResult.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
+            throw std::runtime_error("TODO: find a new starting position");
+
+        GetMiddleResult middle;
+        do {
+            middle                      = getMiddle(searchResult, angle);
+            BresenhamLine moveAlongLine = {searchResult, angle, W, H};
+            while (moveAlongLine.hasNext() &&
+                   moveAlongLine.getCurrentLength() < RETRY_JUMP_DISTANCE)
+                searchResult = moveAlongLine.next();
+        } while (!middle.valid);  // TODO: end loop somehow
+            // (counter? check if searchResult no longer changes?)
+
+        HoughResult result1 =
+            findLineAngleAccurateRange<angle_t::resolution() / 12>(middle.pixel,
+                                                                   angle);
+        HoughResult result2 =
+            findLineAngleAccurateRange<angle_t::resolution() / 12>(
+                middle.pixel, angle.opposite());
+
+        return {
+            middle.pixel,
+            middle.width,
+            result1.count >= result2.count ? result1.angle : result2.angle,
+        };
+    }
+
+    Pixel findWhiteAlongLine(Pixel start, CosSin angle, size_t minWidth) {
+        cout << "FindWhiteAlongLine " << start << ", " << angle << ", "
+             << minWidth << endl;
+        BresenhamLine path = {start, angle, W, H};
+        size_t width;
+        do {
+            Pixel pixel = path.next();
+            while (path.hasNext() && get(pixel) == 0x00)
+                pixel = path.next();
+            Pixel firstWhite = pixel;
+            cout << "first white = " << firstWhite << endl;
+            size_t firstWhiteDistance = path.getCurrentLength();
+            while (path.hasNext() && get(pixel) != 0x00)
+                pixel = path.next();
+            // TODO: OBOE, but I don't really care
+            Pixel firstBlack = pixel;
+            cout << "first black = " << firstBlack << endl;
+
+            size_t firstBlackDistance = path.getCurrentLength();
+            width                     = firstBlackDistance - firstWhiteDistance;
+            if (width >= minWidth)
+                return Pixel::average(firstBlack, firstWhite);
+        } while (path.hasNext());
+        return Pixel();  // invalid Pixel
     }
 
     // TODO: getValue() (0 or 255)

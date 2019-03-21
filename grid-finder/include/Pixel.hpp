@@ -15,6 +15,9 @@ struct Pixel {
         // Unsigned comparison also checks for >= 0
         return x < w && y < h;
     }
+    static Pixel average(Pixel a, Pixel b) {
+        return {(a.x + b.x) / 2, (a.y + b.y) / 2};
+    }
 };
 
 inline std::ostream &operator<<(std::ostream &os, Pixel p) {
