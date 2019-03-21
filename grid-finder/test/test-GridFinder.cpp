@@ -326,7 +326,9 @@ TEST(GridMask, findLineAngleAccurateRange110) {
 
     // gm.print(cout);
 
-    double result = gm.findLineAngleAccurateRange<45>(center, angle).angle.rad();
+    double result =
+        gm.findLineAngleAccurateRange<angle_t::resolution() / 8>(center, angle)
+            .angle.rad();
     double expect = angle;
 
     EXPECT_NEAR(result, expect, angle_t::step());
@@ -344,7 +346,9 @@ TEST(GridMask, findLineAngleAccurateRange20) {
 
     // gm.print(cout);
 
-    double result = gm.findLineAngleAccurateRange<45>(center, angle).angle.rad();
+    double result =
+        gm.findLineAngleAccurateRange<angle_t::resolution() / 8>(center, angle)
+            .angle.rad();
     double expect = angle;
 
     EXPECT_NEAR(result, expect, angle_t::step());
@@ -362,7 +366,9 @@ TEST(GridMask, findLineAngleAccurateRange340) {
 
     // gm.print(cout);
 
-    double result = gm.findLineAngleAccurateRange<45>(center, angle).angle.rad();
+    double result =
+        gm.findLineAngleAccurateRange<angle_t::resolution() / 8>(center, angle)
+            .angle.rad();
     double expect = angle;
 
     EXPECT_NEAR(result, expect, angle_t::step());
