@@ -164,9 +164,8 @@ class GridMask {
             Pixel point = line.next();
             // If pixel is white, then add weight to count
             // Mask == 0xFFFF if pixel is white, 0x0000 if it's black
-            uint_fast16_t mask = get(point) << 8 | get(point);
-            count += weight & mask;
-            ++weight;
+            if (get(point))
+                count += weight++;
         }
         return {angle, count};
     }
@@ -206,8 +205,8 @@ class GridMask {
                 break;
         }
 
-        cout << "first_max = " <<first_max->angle << endl;
-        cout << "last_max = " <<last_max->angle << endl;
+        cout << "first_max = " << first_max->angle << endl;
+        cout << "last_max = " << last_max->angle << endl;
         cout << "count = " << max->count << endl;
 
         return {
@@ -427,7 +426,7 @@ class GridMask {
     }
 
     LineResult findNextLine(LineResult line) {
-        CosSin perp       = line.angle.perpendicular();
+        CosSin perp       = line.angle.perpendicular(line.lineCenter.y < H / 2);
         Pixel searchStart = line.lineCenter;
         Pixel searchResult;
         do {

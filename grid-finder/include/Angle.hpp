@@ -13,15 +13,24 @@ struct CosSin {
     int cos;
     int sin;
 
+    static constexpr int getScalingFactor() {
+        return std::numeric_limits<int>::max() / 2;
+    }
+
+    [[nodiscard]] constexpr double cosd() const {
+        return (double) cos / getScalingFactor();
+    }
+
+    [[nodiscard]] constexpr double sind() const {
+        return (double) sin / getScalingFactor();
+    }
     [[nodiscard]] constexpr CosSin perpendicular(bool plus90deg = true) const {
         return plus90deg ? CosSin{-sin, cos} : CosSin{sin, -cos};
     }
     [[nodiscard]] constexpr CosSin opposite() const {
         return CosSin{-cos, -sin};
     }
-    [[nodiscard]] constexpr double rad() const {
-        return std::atan2(sin, cos);
-    }
+    [[nodiscard]] constexpr double rad() const { return std::atan2(sin, cos); }
 };
 
 inline std::ostream &operator<<(std::ostream &os, CosSin angle) {
@@ -57,16 +66,14 @@ class Angle {
     [[nodiscard]] constexpr int sin() const { return sines[angle_index]; }
 
     [[nodiscard]] constexpr double cosd() const {
-        return (double) cos() / getScalingFactor();
+        return (double) cos() / CosSin::getScalingFactor();
     }
 
     [[nodiscard]] constexpr double sind() const {
-        return (double) sin() / getScalingFactor();
+        return (double) sin() / CosSin::getScalingFactor();
     }
 
-    [[nodiscard]] constexpr Angle opposite() const {
-        return *this + M_PI;
-    }
+    [[nodiscard]] constexpr Angle opposite() const { return *this + M_PI; }
 
     [[nodiscard]] constexpr Angle operator+(Angle rhs) const {
         return normalize(this->angle_index + rhs.angle_index);
@@ -87,8 +94,8 @@ class Angle {
     }
 
     constexpr static Angle average(Angle first_angle, Angle last_angle) {
-        auto first =  first_angle.angle_index;
-        auto last = last_angle.angle_index;
+        auto first = first_angle.angle_index;
+        auto last  = last_angle.angle_index;
         if (first > last)
             last += resolution();
         size_t angle = (first + last) / 2;
@@ -96,11 +103,13 @@ class Angle {
     }
 
     static constexpr int cos(size_t angleIndex) {
-        return std::round(std::cos(step() * angleIndex) * getScalingFactor());
+        return std::round(std::cos(step() * angleIndex) *
+                          CosSin::getScalingFactor());
     }
 
     static constexpr int sin(size_t angleIndex) {
-        return std::round(std::sin(step() * angleIndex) * getScalingFactor());
+        return std::round(std::sin(step() * angleIndex) *
+                          CosSin::getScalingFactor());
     }
 
     static constexpr size_t getIndex(double angle) {
@@ -109,10 +118,6 @@ class Angle {
 
     static constexpr double getAngle(size_t angleIndex) {
         return angleIndex * step();
-    }
-
-    static constexpr int getScalingFactor() {
-        return std::numeric_limits<int>::max() / 2;
     }
 
     static constexpr double step() { return 2 * M_PI / Resolution; }

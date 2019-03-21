@@ -18,19 +18,31 @@ inline std::ostream &operator<<(std::ostream &os, Point p) {
     return os << '(' << p.x << ", " << p.y << ')';
 }
 
+#include <iostream>
+
+using std::cout;
+using std::endl;
+
 class Line {
   private:
     const ColVector<3> homogCoordinates;
 
   public:
-    Line(Pixel p, angle_t slope)
+    Line(ColVector<3> homogCoordinates) : homogCoordinates(homogCoordinates) {}
+    Line(Pixel p, CosSin slope)
         : homogCoordinates{
               slope.sind(),
               -slope.cosd(),
               -slope.sind() * p.x + slope.cosd() * p.y,
           } {}
 
-    Line(ColVector<3> homogCoordinates) : homogCoordinates(homogCoordinates) {}
+    bool rightOfPoint(Pixel point) {
+        double signedDistance = homogCoordinates[0] * point.x +
+                                homogCoordinates[1] * point.y +
+                                homogCoordinates[2];
+        cout << signedDistance << endl;
+        return signedDistance >= 0;
+    }
 
     static Point intersect(Line a, Line b) {
         ColVector<3> crss = cross(a.homogCoordinates, b.homogCoordinates);
