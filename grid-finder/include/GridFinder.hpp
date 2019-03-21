@@ -327,7 +327,14 @@ class GridMask {
         return maxWidth - 1;
     }
 
-    Pixel getMiddle(Pixel pointOnLine, CosSin angle, size_t max_gap = MAX_GAP) {
+    struct GetMiddleResult {
+        Pixel pixel;
+        size_t width;
+        bool valid;
+    };
+
+    GetMiddleResult getMiddle(Pixel pointOnLine, CosSin angle,
+                              size_t max_gap = MAX_GAP) {
         CosSin oppositeAngle = angle.opposite();
         size_t widthUpper1 =
             getWidthAtPointOnLine(pointOnLine, angle, max_gap / 2, true);
@@ -342,7 +349,7 @@ class GridMask {
         size_t widthLower = std::max(widthLower1, widthLower2);
 
         if (widthUpper >= maxLineWidth || widthLower >= maxLineWidth)
-            return Pixel();  // return invalid pixel
+            return {Pixel(), 0, false};  // return invalid pixel
 
         int middlePointCorrection = widthUpper - widthLower;
 
@@ -356,19 +363,53 @@ class GridMask {
         while (corr.hasNext() &&
                corr.getCurrentLength() <= middlePointCorrectionDistance)
             middle = corr.next();
-        return middle;
+        return {middle, widthUpper + widthLower - 1, true};
     }
 
-    auto getFirstLine(Pixel whitePixel) {
-        struct {
-            Pixel lineCenter;
-            size_t width;
-            double angle;
-            int cos;
-            int sin;
-        } result;
+    constexpr static size_t MINIMIM_LINE_WEIGHTED_VOTE_COUNT =
+        (W + H) / 10;  // TODO
 
-        return result;
+    // When we're at an intersection and no width can be determined, how
+    // far should we jump along the line before trying again.
+    constexpr static size_t RETRY_JUMP_DISTANCE = (W + H) / 20;  // TODO
+
+    struct GetFirstLineResult {
+        Pixel lineCenter;
+        size_t width;
+        CosSin angle;
+    };
+    GetFirstLineResult getFirstLine() {
+        auto start              = getStartingPoint();
+        HoughResult firstResult = findLineAngle(start.pixel);
+        angle_t firstAngle       = firstResult.angle;
+        // There could be noise, so the first "line" could be just a white
+        // bit of noise
+        // TODO
+        if (firstResult.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
+            throw std::runtime_error("TODO: find a new starting position");
+
+        GetMiddleResult middle;
+        do {
+            middle                      = getMiddle(start.pixel, firstAngle);
+            BresenhamLine moveAlongLine = {start.pixel, firstAngle, W, H};
+            while (moveAlongLine.hasNext() &&
+                   moveAlongLine.getCurrentLength() < RETRY_JUMP_DISTANCE)
+                start.pixel = moveAlongLine.next();
+        } while (!middle.valid);  // TODO: end loop somehow
+            // (counter? check if start.pixel no longer changes?)
+
+        HoughResult result1 =
+            findLineAngleAccurateRange<angle_t::resolution() / 12>(middle.pixel,
+                                                                   firstAngle);
+        HoughResult result2 =
+            findLineAngleAccurateRange<angle_t::resolution() / 12>(
+                middle.pixel, firstAngle.opposite());
+
+        return {
+            middle.pixel,
+            middle.width,
+            result1.count >= result2.count ? result1.angle : result2.angle,
+        };
     }
 
     // TODO: getValue() (0 or 255)

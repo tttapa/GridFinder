@@ -4,6 +4,7 @@ add_executable(grid_finder_test
     test-Bresenham.cpp
     test-Angle.cpp
     test-Line.cpp
+    test-CenterPointOutLineIterator.cpp
 )
 # Link the test executable with the Google Test main entry point and the library
 # under test

@@ -19,10 +19,13 @@ struct CosSin {
     [[nodiscard]] constexpr CosSin opposite() const {
         return CosSin{-cos, -sin};
     }
+    [[nodiscard]] constexpr double rad() const {
+        return std::atan2(sin, cos);
+    }
 };
 
 inline std::ostream &operator<<(std::ostream &os, CosSin angle) {
-    return os << std::atan2(angle.sin, angle.cos);
+    return os << angle.rad();
 }
 
 template <size_t Resolution>
@@ -59,6 +62,10 @@ class Angle {
 
     [[nodiscard]] constexpr double sind() const {
         return (double) sin() / getScalingFactor();
+    }
+
+    [[nodiscard]] constexpr Angle opposite() const {
+        return *this + M_PI;
     }
 
     [[nodiscard]] constexpr Angle operator+(Angle rhs) const {
@@ -133,4 +140,14 @@ using angle_t = Angle<360>;
 template <size_t Resolution>
 std::ostream &operator<<(std::ostream &os, Angle<Resolution> angle) {
     return os << (double) angle;
+}
+
+template <size_t Resolution>
+constexpr bool operator==(Angle<Resolution> lhs, CosSin rhs) {
+    return lhs.cos() == rhs.cos && lhs.sin() == rhs.sin;
+}
+
+template <size_t Resolution>
+constexpr bool operator==(CosSin lhs, Angle<Resolution> rhs) {
+    return lhs.cos == rhs.cos() && lhs.sin == rhs.sin();
 }

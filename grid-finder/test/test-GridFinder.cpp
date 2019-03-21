@@ -519,7 +519,7 @@ TEST(GridMask, getMiddleHorizontal) {
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    Pixel result = gm.getMiddle(pixel, angle, 4);
+    Pixel result = gm.getMiddle(pixel, angle, 4).pixel;  // TODO: check width
     Pixel expect = {4, 4};
     // Row 4 is the center of the horizontal line with thickness 7
 
@@ -550,7 +550,7 @@ TEST(GridMask, getMiddleVertical) {
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    Pixel result = gm.getMiddle(pixel, angle, 4);
+    Pixel result = gm.getMiddle(pixel, angle, 4).pixel;  // TODO: check width
     Pixel expect = {4, 4};
     // Row column 4 is the center of the horizontal line with thickness 7
     // The white pixel in (0, 1) is excluded by the small max_gap of 4
@@ -582,7 +582,7 @@ TEST(GridMask, getMiddleDiagonalAbove) {
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    Pixel result = gm.getMiddle(pixel, angle, 4);
+    Pixel result = gm.getMiddle(pixel, angle, 4).pixel;  // TODO: check width
     Pixel expect = {4, 4};
 
     EXPECT_EQ(result, expect);
@@ -612,7 +612,7 @@ TEST(GridMask, getMiddleDiagonalBelow) {
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    Pixel result = gm.getMiddle(pixel, angle, 4);
+    Pixel result = gm.getMiddle(pixel, angle, 4).pixel;  // TODO: check width
     Pixel expect = {4, 4};
 
     EXPECT_EQ(result, expect);
@@ -634,27 +634,27 @@ TEST(GridMask, getMiddleCross) {
     gm.print(cout);
 
     Pixel pixel  = {40, 40};
-    Pixel result = gm.getMiddle(pixel, angle, 4);
+    Pixel result = gm.getMiddle(pixel, angle, 4).pixel;  // TODO: check width
 
     EXPECT_FALSE(result.isValid());
 }
 
-#include <CenterPointOutLineIterator.hpp>
+TEST(GridMask, getFirstLine) {
+    GridMask<40 + 19, 19> gm = {};
 
-TEST(CenterPointOutLineIterator, CenterPointOutLineIteratorOdd) {
-    CenterPointOutLineIterator c(7);
-    vector<size_t> result;
-    while (c.hasNext())
-        result.push_back(c.next());
-    vector<size_t> expect = {3, 4, 2, 5, 1, 6, 0};
-    ASSERT_EQ(result, expect);
-}
+    angle_t angle = 22.5_deg;
 
-TEST(CenterPointOutLineIterator, CenterPointOutLineIteratorEven) {
-    CenterPointOutLineIterator c(6);
-    vector<size_t> result;
-    while (c.hasNext())
-        result.push_back(c.next());
-    vector<size_t> expect = {2, 3, 1, 4, 0, 5};
-    ASSERT_EQ(result, expect);
+    for (size_t i = 0; i < 5; ++i) {
+        gm.drawLine({0, i}, angle);
+    }
+    gm.print(cout);
+    auto firstLine = gm.getFirstLine();
+
+    GridMask<40 + 19, 19> gmp = {};
+    gmp.drawLine(firstLine.lineCenter, firstLine.angle);
+    gmp.print(cout);
+
+    EXPECT_EQ(firstLine.lineCenter, Pixel(9, 15));
+    EXPECT_EQ(firstLine.width, 5);
+    EXPECT_EQ(firstLine.angle, angle);
 }
