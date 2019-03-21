@@ -196,7 +196,7 @@ TEST(GridMask, Hough) {
     for (double angle = 0; angle < 2 * M_PI; angle += step)
         houghRes.emplace_back(gm.hough(center, angle));
 
-    double result = max_element(houghRes.begin(), houghRes.end())->angle;
+    double result = max_element(houghRes.begin(), houghRes.end())->angle.rad();
     double expect = angle;
 
     EXPECT_TRUE(abs(result - expect) <= step);
@@ -212,10 +212,10 @@ TEST(GridMask, findLineAngleAccurate) {
     while (line.hasNext())
         gm.set(line.next());
 
-    double result = gm.findLineAngleAccurate(center);
+    double result = gm.findLineAngleAccurate(center).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, findLineAngleAccurateZero) {
@@ -228,10 +228,10 @@ TEST(GridMask, findLineAngleAccurateZero) {
     while (line.hasNext())
         gm.set(line.next());
 
-    double result = gm.findLineAngleAccurate(center);
+    double result = gm.findLineAngleAccurate(center).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, findLineAngleAccuratePI) {
@@ -244,10 +244,10 @@ TEST(GridMask, findLineAngleAccuratePI) {
     while (line.hasNext())
         gm.set(line.next());
 
-    double result = gm.findLineAngleAccurate(center);
+    double result = gm.findLineAngleAccurate(center).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, findLineAngleAccuratePI2) {
@@ -260,10 +260,10 @@ TEST(GridMask, findLineAngleAccuratePI2) {
     while (line.hasNext())
         gm.set(line.next());
 
-    double result = gm.findLineAngleAccurate(center);
+    double result = gm.findLineAngleAccurate(center).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, findLineAngleAccurateMinusPI2) {
@@ -276,10 +276,10 @@ TEST(GridMask, findLineAngleAccurateMinusPI2) {
     while (line.hasNext())
         gm.set(line.next());
 
-    double result = gm.findLineAngleAccurate(center);
+    double result = gm.findLineAngleAccurate(center).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, findLineAngleAccuratePI4) {
@@ -292,10 +292,10 @@ TEST(GridMask, findLineAngleAccuratePI4) {
     while (line.hasNext())
         gm.set(line.next());
 
-    double result = gm.findLineAngleAccurate(center);
+    double result = gm.findLineAngleAccurate(center).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, findLineAngleAccurateRandomAngle) {
@@ -308,10 +308,10 @@ TEST(GridMask, findLineAngleAccurateRandomAngle) {
     while (line.hasNext())
         gm.set(line.next());
 
-    double result = gm.findLineAngleAccurate(center);
+    double result = gm.findLineAngleAccurate(center).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, findLineAngleAccurateRange110) {
@@ -326,10 +326,10 @@ TEST(GridMask, findLineAngleAccurateRange110) {
 
     // gm.print(cout);
 
-    double result = gm.findLineAngleAccurateRange<45>(center, angle);
+    double result = gm.findLineAngleAccurateRange<45>(center, angle).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, findLineAngleAccurateRange20) {
@@ -344,10 +344,10 @@ TEST(GridMask, findLineAngleAccurateRange20) {
 
     // gm.print(cout);
 
-    double result = gm.findLineAngleAccurateRange<45>(center, angle);
+    double result = gm.findLineAngleAccurateRange<45>(center, angle).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, findLineAngleAccurateRange340) {
@@ -362,10 +362,10 @@ TEST(GridMask, findLineAngleAccurateRange340) {
 
     // gm.print(cout);
 
-    double result = gm.findLineAngleAccurateRange<45>(center, angle);
+    double result = gm.findLineAngleAccurateRange<45>(center, angle).angle.rad();
     double expect = angle;
 
-    EXPECT_NEAR(result, expect, 2 * M_PI / gm.HOUGH_ANGLE_RESOLUTION);
+    EXPECT_NEAR(result, expect, angle_t::step());
 }
 
 TEST(GridMask, getWidth) {
@@ -379,18 +379,17 @@ TEST(GridMask, getWidth) {
         {0, 0, 0, 0, 0, 0, 0, 0, 0},
     }}};
 
-    int cos     = BresenhamLine::cos(0);
-    int sin     = BresenhamLine::sin(0);
-    Pixel pixel = {0, 3};
+    CosSin angle = angle_t(0_deg);
+    Pixel pixel  = {0, 3};
 
     GridMask<9, 7> gm_draw = {};
-    BresenhamLine l        = {pixel, cos, sin, 9, 7};
+    BresenhamLine l        = {pixel, angle, 9, 7};
     while (l.hasNext())
         gm_draw.set(l.next());
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    size_t result = gm.getWidthAtPointOnLine(pixel, cos, sin);
+    size_t result = gm.getWidthAtPointOnLine(pixel, angle);
     size_t expect = 3;
     // (7, 5) has a width of 3, starting from the base line through (7, 3)
 
@@ -410,18 +409,18 @@ TEST(GridMask, getWidth45) {
         {0, 0, 0, 0, 0, 0, 1, 1, 1},
     }}};
 
-    int cos     = BresenhamLine::cos(45_deg);
-    int sin     = BresenhamLine::sin(45_deg);
+    CosSin angle = angle_t(45_deg);
+
     Pixel pixel = {0, 0};
 
     GridMask<9, 9> gm_draw = {};
-    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    size_t result = gm.getWidthAtPointOnLine(pixel, cos, sin, 9);
+    size_t result = gm.getWidthAtPointOnLine(pixel, angle, 9);
     size_t expect = 3;
     // (7, 5) has a width of 3, starting from the base line through (7, 3)
 
@@ -441,18 +440,18 @@ TEST(GridMask, getWidth135) {
         {1, 1, 1, 0, 0, 0, 0, 0, 0},
     }}};
 
-    int cos     = BresenhamLine::cos(135_deg);
-    int sin     = BresenhamLine::sin(135_deg);
+    CosSin angle = angle_t(135_deg);
+
     Pixel pixel = {8, 0};
 
     GridMask<9, 9> gm_draw = {};
-    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    size_t result = gm.getWidthAtPointOnLine(pixel, cos, sin, 9);
+    size_t result = gm.getWidthAtPointOnLine(pixel, angle, 9);
     size_t expect = 3;
     // (7, 5) has a width of 3, starting from the base line through (7, 3)
 
@@ -472,18 +471,18 @@ TEST(GridMask, getWidth225) {
         {0, 0, 0, 0, 0, 0, 1, 1, 1},
     }}};
 
-    int cos     = BresenhamLine::cos(225_deg);
-    int sin     = BresenhamLine::sin(225_deg);
+    CosSin angle = angle_t(225_deg);
+
     Pixel pixel = {8, 8};
 
     GridMask<9, 9> gm_draw = {};
-    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    size_t result = gm.getWidthAtPointOnLine(pixel, cos, sin, 9);
+    size_t result = gm.getWidthAtPointOnLine(pixel, angle, 9);
     size_t expect = 3;
     // (7, 5) has a width of 3, starting from the base line through (7, 3)
 
@@ -503,18 +502,18 @@ TEST(GridMask, getMiddleHorizontal) {
         {0, 0, 0, 0, 0, 0, 0, 0, 0},
     }}};
 
-    int cos     = BresenhamLine::cos(0);
-    int sin     = BresenhamLine::sin(0);
+    CosSin angle = angle_t(0);
+
     Pixel pixel = {4, 2};
 
     GridMask<9, 9> gm_draw = {};
-    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    Pixel result = gm.getMiddle(pixel, cos, sin, 4);
+    Pixel result = gm.getMiddle(pixel, angle, 4);
     Pixel expect = {4, 4};
     // Row 4 is the center of the horizontal line with thickness 7
 
@@ -534,18 +533,18 @@ TEST(GridMask, getMiddleVertical) {
         {0, 1, 1, 1, 1, 1, 1, 1, 0},
     }}};
 
-    int cos     = BresenhamLine::cos(M_PI_2);
-    int sin     = BresenhamLine::sin(M_PI_2);
+    CosSin angle = angle_t(M_PI_2);
+
     Pixel pixel = {2, 4};
 
     GridMask<9, 9> gm_draw = {};
-    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    Pixel result = gm.getMiddle(pixel, cos, sin, 4);
+    Pixel result = gm.getMiddle(pixel, angle, 4);
     Pixel expect = {4, 4};
     // Row column 4 is the center of the horizontal line with thickness 7
     // The white pixel in (0, 1) is excluded by the small max_gap of 4
@@ -566,18 +565,18 @@ TEST(GridMask, getMiddleDiagonalAbove) {
         {0, 0, 0, 0, 0, 0, 1, 1, 1},
     }}};
 
-    int cos     = BresenhamLine::cos(M_PI_4);
-    int sin     = BresenhamLine::sin(M_PI_4);
+    CosSin angle = angle_t(M_PI_4);
+
     Pixel pixel = {3, 5};
 
     GridMask<9, 9> gm_draw = {};
-    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    Pixel result = gm.getMiddle(pixel, cos, sin, 4);
+    Pixel result = gm.getMiddle(pixel, angle, 4);
     Pixel expect = {4, 4};
 
     EXPECT_EQ(result, expect);
@@ -596,18 +595,18 @@ TEST(GridMask, getMiddleDiagonalBelow) {
         {0, 0, 0, 0, 0, 0, 1, 1, 1},
     }}};
 
-    int cos     = BresenhamLine::cos(M_PI_4);
-    int sin     = BresenhamLine::sin(M_PI_4);
+    CosSin angle = angle_t(M_PI_4);
+
     Pixel pixel = {5, 3};
 
     GridMask<9, 9> gm_draw = {};
-    BresenhamLine l        = {pixel, cos, sin, 9, 9};
+    BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    Pixel result = gm.getMiddle(pixel, cos, sin, 4);
+    Pixel result = gm.getMiddle(pixel, angle, 4);
     Pixel expect = {4, 4};
 
     EXPECT_EQ(result, expect);
@@ -616,44 +615,22 @@ TEST(GridMask, getMiddleDiagonalBelow) {
 TEST(GridMask, getMiddleCross) {
     GridMask<80, 80> gm = {};
 
-    int cos     = BresenhamLine::cos(M_PI_4);
-    int sin     = BresenhamLine::sin(M_PI_4);
-    auto [pcos, psin] = gm.getPerpendicularCosSin(cos, sin);
+    CosSin angle              = angle_t(45_deg);
+    CosSin perpendicularAngle = angle.perpendicular();
 
     for (size_t i = 0; i < 4; ++i) {
-        gm.drawLine({0, i}, cos, sin);
-        gm.drawLine({i, 0}, cos, sin);
-        gm.drawLine({79, i}, pcos, psin);
-        gm.drawLine({79-i, 0}, pcos, psin);
+        gm.drawLine({0, i}, angle);
+        gm.drawLine({i, 0}, angle);
+        gm.drawLine({79, i}, perpendicularAngle);
+        gm.drawLine({79 - i, 0}, perpendicularAngle);
     }
 
     gm.print(cout);
 
-    Pixel pixel = {40, 40};
-    Pixel result = gm.getMiddle(pixel, cos, sin, 4);
+    Pixel pixel  = {40, 40};
+    Pixel result = gm.getMiddle(pixel, angle, 4);
 
     EXPECT_FALSE(result.isValid());
-}
-
-TEST(GridMask, averageAngle) {
-    using GM   = GridMask<1, 1>;
-    double eps = 2 * M_PI * numeric_limits<double>::epsilon();
-    EXPECT_NEAR(GM::averageAngle(350_deg, 10_deg), 0_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(10_deg, 350_deg), 180_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(270_deg, 90_deg), 0_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(181_deg, 179_deg), 0_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(179_deg, 181_deg), 180_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(45_deg, 135_deg), 90_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(135_deg, 45_deg), 270_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(357_deg, 359_deg), 358_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(359_deg, 357_deg), 178_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(0_deg, 2_deg), 1_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(2_deg, 0_deg), 181_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(0_deg, 0_deg), 0_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(359_deg, 359_deg), 359_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(180_deg, 180_deg), 180_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(269_deg, 271_deg), 270_deg, eps);
-    EXPECT_NEAR(GM::averageAngle(181_deg, 179_deg), 0_deg, eps);
 }
 
 #include <CenterPointOutLineIterator.hpp>

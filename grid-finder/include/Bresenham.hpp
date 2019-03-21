@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Angle.hpp>
 #include <Pixel.hpp>
 #include <cmath>
 #include <limits>
@@ -8,6 +9,8 @@ class BresenhamLine {
   public:
     BresenhamLine(Pixel start, double angle, size_t w, size_t h);
     BresenhamLine(Pixel start, int cos, int sin, size_t w, size_t h);
+    BresenhamLine(Pixel start, CosSin angle, size_t w, size_t h)
+        : BresenhamLine(start, angle.cos, angle.sin, w, h) {}
 
     bool hasNext() const;
     Pixel next();

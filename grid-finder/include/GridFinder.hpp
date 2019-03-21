@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ANSIColors.hpp>
+#include <Angle.hpp>
 #include <Bresenham.hpp>
 #include <CenterPointOutLineIterator.hpp>
 #include <Matrix.hpp>
@@ -14,7 +15,7 @@ using std::cout;
 using std::endl;
 
 struct HoughResult {
-    double angle;
+    angle_t angle;
     size_t count;
     bool operator<(HoughResult other) const {
         return this->count < other.count;
@@ -155,7 +156,7 @@ class GridMask {
 
     // TODO: HoughResult --> ? (better name - line with vote count)
     // TODO: hough() --> countVotes()
-    HoughResult hough(Pixel px, double angle) {
+    HoughResult hough(Pixel px, angle_t angle) {
         BresenhamLine line   = {px, angle, W, H};
         size_t count         = 0;
         uint_fast16_t weight = 0;
@@ -170,21 +171,17 @@ class GridMask {
         return {angle, count};
     }
 
-    constexpr static size_t HOUGH_ANGLE_RESOLUTION = 360;
-
-    double findLineAngle(Pixel px) {
-        std::array<HoughResult, HOUGH_ANGLE_RESOLUTION> houghRes;
-        double step = 2 * M_PI / HOUGH_ANGLE_RESOLUTION;
-        for (size_t i = 0; i < HOUGH_ANGLE_RESOLUTION; ++i)
-            houghRes.at(i) = hough(px, step * i);
-        return std::max_element(houghRes.begin(), houghRes.end())->angle;
+    HoughResult findLineAngle(Pixel px) {
+        std::array<HoughResult, angle_t::resolution()> houghRes;
+        for (size_t i = 0; i < angle_t::resolution(); ++i)
+            houghRes.at(i) = hough(px, i);
+        return *std::max_element(houghRes.begin(), houghRes.end());
     }
 
-    double findLineAngleAccurate(Pixel px) {
-        std::array<HoughResult, HOUGH_ANGLE_RESOLUTION> houghRes;
-        double step = 2 * M_PI / HOUGH_ANGLE_RESOLUTION;
-        for (size_t i = 0; i < HOUGH_ANGLE_RESOLUTION; ++i)
-            houghRes.at(i) = hough(px, step * i);
+    HoughResult findLineAngleAccurate(Pixel px) {
+        std::array<HoughResult, angle_t::resolution()> houghRes;
+        for (size_t i = 0; i < angle_t::resolution(); ++i)
+            houghRes.at(i) = hough(px, i);
         auto max       = std::max_element(houghRes.begin(), houghRes.end());
         auto first_max = max;
         auto last_max  = max;
@@ -208,15 +205,17 @@ class GridMask {
                 break;
         }
 
-        return averageAngle(first_max->angle, last_max->angle);
+        return {
+            angle_t::average(first_max->angle, last_max->angle),
+            max->count,
+        };
     }
 
     template <size_t N>
-    double findLineAngleAccurateRange(Pixel px, double centerAngle) {
-        static_assert(2 * N < HOUGH_ANGLE_RESOLUTION);
+    HoughResult findLineAngleAccurateRange(Pixel px, angle_t centerAngle) {
+        static_assert(2 * N < angle_t::resolution());
         std::array<HoughResult, 2 * N + 1> houghRes;
-        double step             = 2 * M_PI / HOUGH_ANGLE_RESOLUTION;
-        size_t centerAngleIndex = round(centerAngle / step);
+        size_t centerAngleIndex = centerAngle.getIndex();
 
         // If the range contains no discontinuities
         // ├───┬───┬───╤═══╤═══╤═══╪═══╤═══╤═══╤───┬───┬───┤
@@ -224,39 +223,39 @@ class GridMask {
         // C = center
         // N = number of steps around the center
         // R = resolution (R steps = 360°)
-        if (centerAngleIndex - N < HOUGH_ANGLE_RESOLUTION &&
-            centerAngleIndex + N < HOUGH_ANGLE_RESOLUTION) {
+        if (centerAngleIndex - N < angle_t::resolution() &&
+            centerAngleIndex + N < angle_t::resolution()) {
             size_t initialAngleIndex = centerAngleIndex - N;
             for (size_t i = 0; i <= 2 * N; ++i)
-                houghRes.at(i) = hough(px, step * (initialAngleIndex + i));
+                houghRes.at(i) = hough(px, initialAngleIndex + i);
         }
         // If the 0-2PI discontinuity is in the first part of the range
         // (< centerAngle)
         // ╞═══╪═══╤═══╤═══╤───┬───┬───┬───┬───┬───┬───╤═══╡
         // 0   C          C+N                         C-N R-1
-        else if (centerAngleIndex + N < HOUGH_ANGLE_RESOLUTION) {
+        else if (centerAngleIndex + N < angle_t::resolution()) {
             size_t initialAngleIndex =
-                HOUGH_ANGLE_RESOLUTION + centerAngleIndex - N;
+                angle_t::resolution() + centerAngleIndex - N;
             size_t i = 0;
-            for (size_t j = initialAngleIndex; j < HOUGH_ANGLE_RESOLUTION;
+            for (size_t j = initialAngleIndex; j < angle_t::resolution();
                  ++i, ++j)
-                houghRes.at(i) = hough(px, step * j);
+                houghRes.at(i) = hough(px, j);
             for (size_t j = 0; j <= centerAngleIndex + N; ++i, ++j)
-                houghRes.at(i) = hough(px, step * j);
+                houghRes.at(i) = hough(px, j);
         }
         // If the 0-2PI discontinuity is in the second part of the range
         // (< centerAngle)
         // ╞═══╤───┬───┬───┬───┬───┬───┬───╤═══╤═══╤═══╪═══╡
         // 0  C+N                         C-N          C  R-1
-        else if (centerAngleIndex - N < HOUGH_ANGLE_RESOLUTION) {
+        else if (angle_t::resolution() - N < angle_t::resolution()) {
             size_t initialAngleIndex = centerAngleIndex - N;
             size_t i                 = 0;
-            for (size_t j = initialAngleIndex; j < HOUGH_ANGLE_RESOLUTION;
+            for (size_t j = initialAngleIndex; j < angle_t::resolution();
                  ++i, ++j)
-                houghRes.at(i) = hough(px, step * j);
+                houghRes.at(i) = hough(px, j);
             for (size_t j = 0;
-                 j <= N + centerAngleIndex - HOUGH_ANGLE_RESOLUTION; ++i, ++j)
-                houghRes.at(i) = hough(px, step * j);
+                 j <= N + centerAngleIndex - angle_t::resolution(); ++i, ++j)
+                houghRes.at(i) = hough(px, j);
         } else {
             assert(false);
         }
@@ -280,7 +279,10 @@ class GridMask {
                  << ANSIColors::reset;
         --last_max;
 
-        return averageAngle(first_max->angle, last_max->angle);
+        return {
+            angle_t::average(first_max->angle, last_max->angle),
+            first_max->count,
+        };
     }
 
     /**
@@ -292,20 +294,20 @@ class GridMask {
 
     static const size_t maxLineWidth = 32;
 
-    size_t getWidthAtPointOnLine(Pixel pixel, int cos, int sin,
+    size_t getWidthAtPointOnLine(Pixel pixel, CosSin angle,
                                  size_t max_gap = MAX_GAP,
                                  bool plus90deg = true) {
-        BresenhamLine alongLine = {pixel, cos, sin, W, H};
-        auto [cosPerp, sinPerp] = getPerpendicularCosSin(cos, sin, plus90deg);
-        size_t maxWidth         = 0;
+        BresenhamLine alongLine   = {pixel, angle, W, H};
+        CosSin perpendicularAngle = angle.perpendicular(plus90deg);
+        size_t maxWidth           = 0;
         // Follow a path along the given line for max_gap pixels
         for (size_t i = 0; i <= max_gap && alongLine.hasNext(); ++i) {
             Pixel pixelAlongLine = alongLine.next();
             // For each pixel along this path, move away from the line,
             // perpendicular to it, untill you find a black pixel, or until you
             // fall off the canvas.
-            BresenhamLine perpendicular = {pixelAlongLine, cosPerp, sinPerp, W,
-                                           H};
+            BresenhamLine perpendicular = {pixelAlongLine, perpendicularAngle,
+                                           W, H};
             while (perpendicular.hasNext() &&
                    perpendicular.getCurrentLength() < maxLineWidth) {
                 Pixel pixel = perpendicular.next();
@@ -325,17 +327,16 @@ class GridMask {
         return maxWidth - 1;
     }
 
-    Pixel getMiddle(Pixel pointOnLine, int cos, int sin,
-                    size_t max_gap = MAX_GAP) {
-        auto [ocos, osin] = getOppositeCosSin(cos, sin);
+    Pixel getMiddle(Pixel pointOnLine, CosSin angle, size_t max_gap = MAX_GAP) {
+        CosSin oppositeAngle = angle.opposite();
         size_t widthUpper1 =
-            getWidthAtPointOnLine(pointOnLine, cos, sin, max_gap / 2, true);
+            getWidthAtPointOnLine(pointOnLine, angle, max_gap / 2, true);
         size_t widthLower1 =
-            getWidthAtPointOnLine(pointOnLine, cos, sin, max_gap / 2, false);
-        size_t widthUpper2 =
-            getWidthAtPointOnLine(pointOnLine, ocos, osin, max_gap / 2, false);
-        size_t widthLower2 =
-            getWidthAtPointOnLine(pointOnLine, ocos, osin, max_gap / 2, true);
+            getWidthAtPointOnLine(pointOnLine, angle, max_gap / 2, false);
+        size_t widthUpper2 = getWidthAtPointOnLine(pointOnLine, oppositeAngle,
+                                                   max_gap / 2, false);
+        size_t widthLower2 = getWidthAtPointOnLine(pointOnLine, oppositeAngle,
+                                                   max_gap / 2, true);
 
         size_t widthUpper = std::max(widthUpper1, widthUpper2);
         size_t widthLower = std::max(widthLower1, widthLower2);
@@ -346,12 +347,11 @@ class GridMask {
         int middlePointCorrection = widthUpper - widthLower;
 
         bool corrDirection = middlePointCorrection > 0;
-        auto [corrCos, corrSin] =
-            getPerpendicularCosSin(cos, sin, corrDirection);
+        CosSin corrAngle   = angle.perpendicular(corrDirection);
         size_t middlePointCorrectionDistance =
             std::abs(middlePointCorrection) / 2;
 
-        BresenhamLine corr = {pointOnLine, corrCos, corrSin, W, H};
+        BresenhamLine corr = {pointOnLine, corrAngle, W, H};
         Pixel middle       = pointOnLine;
         while (corr.hasNext() &&
                corr.getCurrentLength() <= middlePointCorrectionDistance)
@@ -368,38 +368,7 @@ class GridMask {
             int sin;
         } result;
 
-        
-
         return result;
-    }
-
-    template <class T>
-    std::tuple<T, T> getPerpendicularCosSin(T cos, T sin,
-                                            bool plus90deg = true) {
-        return plus90deg ? std::tuple<T, T>{-sin, cos}
-                         : std::tuple<T, T>{sin, -cos};
-    }
-
-    template <class T>
-    std::tuple<T, T> getOppositeCosSin(T cos, T sin) {
-        return {-cos, -sin};
-    }
-
-    double static getPerpendicularAngle(double angle) {
-        return normalizeAngle(angle + M_PI_2);
-    }
-
-    double static normalizeAngle(double angle) {
-        if (angle >= 2 * M_PI)
-            angle -= 2 * M_PI;
-        return angle;
-    }
-
-    static double averageAngle(double first_angle, double last_angle) {
-        if (first_angle > last_angle)
-            last_angle += 2 * M_PI;
-        double angle = (first_angle + last_angle) / 2;
-        return normalizeAngle(angle);
     }
 
     // TODO: getValue() (0 or 255)
@@ -430,6 +399,11 @@ class GridMask {
     }
 
     size_t drawLine(Pixel pixel, double angle) {
+        BresenhamLine line = {pixel, angle, W, H};
+        return drawLine(line);
+    }
+
+    size_t drawLine(Pixel pixel, CosSin angle) {
         BresenhamLine line = {pixel, angle, W, H};
         return drawLine(line);
     }
