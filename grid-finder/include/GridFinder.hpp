@@ -359,6 +359,20 @@ class GridMask {
         return middle;
     }
 
+    auto getFirstLine(Pixel whitePixel) {
+        struct {
+            Pixel lineCenter;
+            size_t width;
+            double angle;
+            int cos;
+            int sin;
+        } result;
+
+        
+
+        return result;
+    }
+
     template <class T>
     std::tuple<T, T> getPerpendicularCosSin(T cos, T sin,
                                             bool plus90deg = true) {
