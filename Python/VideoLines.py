@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,21 +9,29 @@ from math import cos, sin
 
 def main():
     video = cv2.VideoCapture("../Video/easy.mp4")
-    frame_width = int(video.get(3))
+    frame_width = int(video.get(3)) * 2
     frame_height = int(video.get(4))
     fps = video.get(cv2.CAP_PROP_FPS)
     out = cv2.VideoWriter('out.avi', cv2.VideoWriter_fourcc(
         'M', 'J', 'P', 'G'), fps, (frame_width, frame_height))
 
+    framectr = 1
     result, image = video.read()
     while result and video.isOpened():
         try:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            processed = processFrame(image)
-            out.write(cv2.cvtColor(processed, cv2.COLOR_RGB2BGR))
-        except:
-            pass
+            mask = redmask(image)
+            processed = processFrame(image, mask)
+            mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(mask, str(framectr), (16, frame_height - 16),
+                        font, 1, (0, 100, 255), 2, cv2.LINE_AA)
+            outimg = np.concatenate((processed, mask), axis=1)
+            out.write(cv2.cvtColor(outimg, cv2.COLOR_RGB2BGR))
+        except Exception as e:
+            print(e)
         result, image = video.read()
+        framectr += 1
 
     video.release()
     out.release()
@@ -37,8 +47,8 @@ def showLine(line, color, image):
     cv2.line(image, p1, p2, color, 2)
 
 
-def processFrame(image):
-    gf = gr.GridFinder(redmask(image))
+def processFrame(image, mask):
+    gf = gr.GridFinder(mask)
     lines, points = gf.findSquare()
 
     colors = [(0, 80, 255), (0, 200, 255), (0, 255, 0),
@@ -68,6 +78,7 @@ def redmask(image):
 
     mask = mask1 | mask2
     return mask
+
 
 if __name__ == '__main__':
     main()
