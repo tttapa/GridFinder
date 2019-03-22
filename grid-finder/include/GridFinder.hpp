@@ -167,6 +167,7 @@ class GridMask {
             // Mask == 0xFFFF if pixel is white, 0x0000 if it's black
             if (get(point))
                 count += weight++;
+            //    count += 1;
         }
         return {angle, count};
     }
@@ -190,10 +191,10 @@ class GridMask {
         // Find last angle with the same count as max_count (+ 1 step)
         while (last_max->count == max->count) {
             ++last_max;
-            if (last_max ==
-                houghRes.end())  // .end() gives index of last element + 1
+            // .end() gives index of last element + 1
+            if (last_max == houghRes.end())
                 last_max = houghRes.begin();
-            else if (last_max == max)
+            if (last_max == max)
                 break;
         }
 
@@ -285,8 +286,11 @@ class GridMask {
                  << "Warning: angle with maximum count could lie outside of "
                     "the specified range\r\n"
                  << ANSIColors::reset;
-        --first_max;
-        --last_max;
+
+        if (first_max != houghRes.rbegin())
+            --first_max;
+        if (last_max != houghRes.begin())
+            --last_max;
 
         return {
             angle_t::average(first_max->angle, last_max->angle),
