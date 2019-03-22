@@ -11,10 +11,12 @@ PYBIND11_MODULE(py_grid_finder, pygridmodule) {
     pybind11::class_<GM>(pygridmodule, "GridFinder")
         .def(pybind11::init<const GM::Img_t &>())
         .def("getFirstLines", &GM::getFirstLines)
-        .def("findNextLine", &GM::findNextLine);
+        .def("findNextLine", &GM::findNextLine)
+        .def("findSquare", &GM::findSquare);
 
     using LineResult = GM::LineResult;
     pybind11::class_<LineResult>(pygridmodule, "LineResult")
+        .def("isValid", [](LineResult r) { return r.valid; })
         .def("getLineCenter", [](LineResult r) { return r.lineCenter; })
         .def("getWidth", [](LineResult r) { return r.width; })
         .def("getAngle", [](LineResult r) { return r.angle.rad(); });
@@ -30,6 +32,15 @@ PYBIND11_MODULE(py_grid_finder, pygridmodule) {
         .def_readwrite("x", &Pixel::x)
         .def_readwrite("y", &Pixel::y)
         .def("__str__", [](Pixel p) {
+            std::stringstream s;
+            s << p;
+            return s.str();
+        });
+
+    pybind11::class_<Point>(pygridmodule, "Point")
+        .def_readwrite("x", &Point::x)
+        .def_readwrite("y", &Point::y)
+        .def("__str__", [](Point p) {
             std::stringstream s;
             s << p;
             return s.str();

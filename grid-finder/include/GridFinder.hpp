@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <optional>
 
 using std::cerr;
 using std::cout;
@@ -438,15 +439,19 @@ class GridMask {
         return end;
     }
 
-    LineResult findNextLine(LineResult line) {
-        Line lline        = {line.lineCenter, line.angle};
-        bool direction    = !lline.rightOfPoint({W / 2, H / 2});
-        angle_t perp      = line.angle.perpendicular(direction);
+    LineResult findNextLine(LineResult line, size_t minimumDistance = 0) {
+        Line lline     = {line.lineCenter, line.angle};
+        bool direction = lline.leftOfPoint({W / 2, H / 2});
+        angle_t perp   = line.angle.perpendicular(direction);
+
         Pixel searchStart = move(line.lineCenter, perp, 2 * line.width);
+        if (minimumDistance)
+            searchStart = move(searchStart, line.angle, minimumDistance);
+
         auto searchResult =
             findWhiteAlongLine(searchStart, line.angle, 2 * line.width / 3);
         if (!searchResult.valid)
-            return {false, searchResult.pixel, 0, 0};
+            return {false, searchResult.pixel, 0, perp};
         // throw std::runtime_error("TODO: no white pixel found");
 
         GetMiddleResult middle = getMiddleWithRetries(searchResult.pixel, perp);
@@ -496,6 +501,41 @@ class GridMask {
         result.pixel = pixel;
         result.valid = false;
         return result;
+    }
+
+    std::tuple<std::array<std::optional<LineResult>, 5>, std::array<Point, 4>>
+    findSquare() {
+        auto firstLines = getFirstLines();
+        auto secondLine = findNextLine(firstLines[0]);
+        auto thirdLine  = findNextLine(firstLines[1]);
+
+        std::array<std::optional<LineResult>, 5> lines;
+        std::array<Point, 4> points;
+
+        lines[0] = firstLines[0];
+        lines[1] = firstLines[1];
+
+        if (secondLine.valid && thirdLine.valid) {
+            lines[2]  = secondLine;
+            lines[3]  = thirdLine;
+            points[0] = intersect(firstLines[0], secondLine);
+            points[1] = intersect(firstLines[1], thirdLine);
+            size_t minimumDistance =
+                std::max(std::abs(points[0].x - points[1].x),
+                         std::abs(points[0].y - points[1].y));
+            minimumDistance -= minimumDistance / 4;
+            auto fourthLine = findNextLine(secondLine, minimumDistance);
+            lines[4]        = fourthLine;
+            points[2]       = intersect(secondLine, fourthLine);
+            points[3]       = intersect(thirdLine, fourthLine);
+        }
+
+        return {lines, points};
+    }
+
+    static Point intersect(LineResult a, LineResult b) {
+        return Line::intersect(Line(a.lineCenter, a.angle),
+                               Line(b.lineCenter, b.angle));
     }
 
     // TODO: getValue() (0 or 255)

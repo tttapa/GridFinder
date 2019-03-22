@@ -40,8 +40,14 @@ class Line {
         double signedDistance = homogCoordinates[0] * point.x +
                                 homogCoordinates[1] * point.y +
                                 homogCoordinates[2];
-        cout << signedDistance << endl;
         return signedDistance >= 0;
+    }
+
+    bool leftOfPoint(Pixel point) {
+        double signedDistance = homogCoordinates[0] * point.x +
+                                homogCoordinates[1] * point.y +
+                                homogCoordinates[2];
+        return signedDistance <= 0;
     }
 
     static Point intersect(Line a, Line b) {

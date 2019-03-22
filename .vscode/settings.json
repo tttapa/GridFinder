@@ -49,7 +49,11 @@
         "tuple": "cpp",
         "type_traits": "cpp",
         "typeinfo": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "optional": "cpp",
+        "list": "cpp",
+        "valarray": "cpp",
+        "variant": "cpp"
     },
     "terminal.integrated.cwd": "build"
 }
