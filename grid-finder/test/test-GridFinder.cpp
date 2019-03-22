@@ -639,7 +639,8 @@ TEST(GridMask, getMiddleCross) {
     EXPECT_FALSE(result.isValid());
 }
 
-TEST(GridMask, getFirstLine) {
+/*
+TEST(GridMask, getFirstLines) {
     GridMask<40 + 19, 19> gm = {};
 
     angle_t angle = 22.5_deg;
@@ -648,7 +649,7 @@ TEST(GridMask, getFirstLine) {
         gm.drawLine({0, i}, angle);
     }
     gm.print(cout);
-    auto firstLine = gm.getFirstLine();
+    auto firstLine = gm.getFirstLines();
 
     GridMask<40 + 19, 19> gmp = {};
     gmp.drawLine(firstLine.lineCenter, firstLine.angle);
@@ -658,3 +659,4 @@ TEST(GridMask, getFirstLine) {
     EXPECT_EQ(firstLine.width, 5);
     EXPECT_EQ(firstLine.angle, angle);
 }
+*/

@@ -3,13 +3,14 @@
 #include <GridFinder.hpp>
 #include <Line.hpp>
 #include <PyMatrix.hpp>
+#include <pybind11/stl.h>
 #include <sstream>
 
 PYBIND11_MODULE(py_grid_finder, pygridmodule) {
     using GM = GridMask<410, 308>;
     pybind11::class_<GM>(pygridmodule, "GridFinder")
         .def(pybind11::init<const GM::Img_t &>())
-        .def("getFirstLine", &GM::getFirstLine)
+        .def("getFirstLines", &GM::getFirstLines)
         .def("findNextLine", &GM::findNextLine);
 
     using LineResult = GM::LineResult;

@@ -4,6 +4,7 @@
 #include <Angle.hpp>
 #include <Bresenham.hpp>
 #include <CenterPointOutLineIterator.hpp>
+#include <Line.hpp>
 #include <Matrix.hpp>
 #include <algorithm>  // max_element
 #include <cstdint>
@@ -370,20 +371,34 @@ class GridMask {
         return {middle, widthUpper + widthLower - 1, true};
     }
 
-    constexpr static size_t MINIMIM_LINE_WEIGHTED_VOTE_COUNT =
-        (W + H) / 10;  // TODO
-
     // When we're at an intersection and no width can be determined, how
     // far should we jump along the line before trying again.
     constexpr static size_t RETRY_JUMP_DISTANCE = (W + H) / 20;  // TODO
 
+    GetMiddleResult getMiddleWithRetries(Pixel start, angle_t angle) {
+        GetMiddleResult middle;
+        Pixel previousPixel;
+        do {
+            previousPixel = start;
+            middle        = getMiddle(start, angle);
+            start         = move(start, angle, RETRY_JUMP_DISTANCE);
+        } while (!middle.valid && previousPixel != start);
+        return middle;
+    }
+
+    constexpr static size_t MINIMIM_LINE_WEIGHTED_VOTE_COUNT =
+        (W + H) / 10;  // TODO
+
     struct LineResult {
+        bool valid;
         Pixel lineCenter;
         size_t width;
-        CosSin angle;
+        angle_t angle;
     };
-    LineResult getFirstLine() {
-        auto start              = getStartingPoint();
+
+    std::array<LineResult, 2> getFirstLines() {
+        auto start = getStartingPoint();
+        // Doesn't have to be accurate, just to find the width
         HoughResult firstResult = findLineAngle(start.pixel);
         angle_t firstAngle      = firstResult.angle;
         // There could be noise, so the first "line" could be just a white
@@ -392,90 +407,65 @@ class GridMask {
         if (firstResult.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
             throw std::runtime_error("TODO: find a new starting position");
 
-        GetMiddleResult middle;
-        do {
-            middle                      = getMiddle(start.pixel, firstAngle);
-            BresenhamLine moveAlongLine = {start.pixel, firstAngle, W, H};
-            while (moveAlongLine.hasNext() &&
-                   moveAlongLine.getCurrentLength() < RETRY_JUMP_DISTANCE)
-                start.pixel = moveAlongLine.next();
-        } while (!middle.valid);  // TODO: end loop somehow
-            // (counter? check if start.pixel no longer changes?)
+        GetMiddleResult middle = getMiddleWithRetries(start.pixel, firstAngle);
+        if (!middle.valid)
+            throw std::runtime_error("TODO: No middle point found");
 
+        constexpr size_t range = angle_t::resolution() / 24;  // 2 * 15°
         HoughResult result1 =
-            findLineAngleAccurateRange<angle_t::resolution() / 12>(middle.pixel,
-                                                                   firstAngle);
-        HoughResult result2 =
-            findLineAngleAccurateRange<angle_t::resolution() / 12>(
-                middle.pixel, firstAngle.opposite());
+            findLineAngleAccurateRange<range>(middle.pixel, firstAngle);
+        HoughResult result2 = findLineAngleAccurateRange<range>(
+            middle.pixel, firstAngle.opposite());
 
-        return {
-            middle.pixel,
-            middle.width,
-            result1.count >= result2.count ? result1.angle : result2.angle,
-        };
+        return {{{true, middle.pixel, middle.width, result1.angle},
+                 {true, middle.pixel, middle.width, result2.angle}}};
     }
 
     Pixel move(Pixel start, CosSin angle, size_t distance) {
         BresenhamLine path = {start, angle, W, H};
         Pixel end;
         while (path.hasNext() &&
-               path.getCurrentLength() <= distance)  // TODO: OBOE?
+               path.getCurrentLength() < distance)  // TODO: OBOE?
             end = path.next();
         return end;
     }
 
     LineResult findNextLine(LineResult line) {
-        CosSin perp       = line.angle.perpendicular(line.lineCenter.y < H / 2);
-        Pixel searchStart = line.lineCenter;
-        Pixel searchResult;
-        do {
-            searchStart = move(searchStart, perp, 2 * line.width);
-            searchResult =
-                findWhiteAlongLine(searchStart, line.angle, 2 * line.width / 3);
-            cout << "searchResult = " << searchResult << endl;
-        } while (!searchResult.isValid());  // TODO: end loop somehow
+        Line lline        = {line.lineCenter, line.angle};
+        bool direction    = !lline.rightOfPoint({W / 2, H / 2});
+        angle_t perp      = line.angle.perpendicular(direction);
+        Pixel searchStart = move(line.lineCenter, perp, 2 * line.width);
+        auto searchResult =
+            findWhiteAlongLine(searchStart, line.angle, 2 * line.width / 3);
+        if (!searchResult.valid)
+            return {false, searchResult.pixel, 0, 0};
+        // throw std::runtime_error("TODO: no white pixel found");
 
-        HoughResult angleResult = findLineAngleAccurate(searchResult);
-        angle_t angle           = angleResult.angle;
-        cout << "angle = " << angle << endl;
-        // There could be noise, so the first "line" could be just a white
-        // bit of noise
-        // TODO
-        if (angleResult.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
+        GetMiddleResult middle = getMiddleWithRetries(searchResult.pixel, perp);
+        if (!middle.valid)
+            throw std::runtime_error("TODO: No middle point found");
+
+        constexpr size_t range = angle_t::resolution() / 12;
+        HoughResult result =
+            findLineAngleAccurateRange<range>(middle.pixel, perp);
+        if (result.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
             throw std::runtime_error("TODO: find a new starting position");
 
-        GetMiddleResult middle;
-        do {
-            middle                      = getMiddle(searchResult, angle);
-            BresenhamLine moveAlongLine = {searchResult, angle, W, H};
-            while (moveAlongLine.hasNext() &&
-                   moveAlongLine.getCurrentLength() < RETRY_JUMP_DISTANCE)
-                searchResult = moveAlongLine.next();
-        } while (!middle.valid);  // TODO: end loop somehow
-            // (counter? check if searchResult no longer changes?)
-
-        HoughResult result1 =
-            findLineAngleAccurateRange<angle_t::resolution() / 12>(middle.pixel,
-                                                                   angle);
-        HoughResult result2 =
-            findLineAngleAccurateRange<angle_t::resolution() / 12>(
-                middle.pixel, angle.opposite());
-
-        return {
-            middle.pixel,
-            middle.width,
-            result1.count >= result2.count ? result1.angle : result2.angle,
-        };
+        return {true, middle.pixel, middle.width, result.angle};
     }
 
-    Pixel findWhiteAlongLine(Pixel start, CosSin angle, size_t minWidth) {
+    auto findWhiteAlongLine(Pixel start, CosSin angle, size_t minWidth) {
+        struct {
+            Pixel pixel;
+            bool valid;
+        } result;
         cout << "FindWhiteAlongLine " << start << ", " << angle << ", "
              << minWidth << endl;
         BresenhamLine path = {start, angle, W, H};
+        Pixel pixel;
         size_t width;
         do {
-            Pixel pixel = path.next();
+            pixel = path.next();
             while (path.hasNext() && get(pixel) == 0x00)
                 pixel = path.next();
             Pixel firstWhite = pixel;
@@ -489,10 +479,15 @@ class GridMask {
 
             size_t firstBlackDistance = path.getCurrentLength();
             width                     = firstBlackDistance - firstWhiteDistance;
-            if (width >= minWidth)
-                return Pixel::average(firstBlack, firstWhite);
+            if (width >= minWidth) {
+                result.pixel = Pixel::average(firstBlack, firstWhite);
+                result.valid = true;
+                return result;
+            }
         } while (path.hasNext());
-        return Pixel();  // invalid Pixel
+        result.pixel = pixel;
+        result.valid = false;
+        return result;
     }
 
     // TODO: getValue() (0 or 255)

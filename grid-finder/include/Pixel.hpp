@@ -11,6 +11,9 @@ struct Pixel {
     bool operator==(Pixel other) const {
         return this->x == other.x && this->y == other.y;
     }
+    bool operator!=(Pixel other) const {
+        return this->x != other.x || this->y != other.y;
+    }
     bool inRange(size_t w, size_t h) const {
         // Unsigned comparison also checks for >= 0
         return x < w && y < h;

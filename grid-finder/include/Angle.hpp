@@ -75,6 +75,10 @@ class Angle {
 
     [[nodiscard]] constexpr Angle opposite() const { return *this + M_PI; }
 
+    [[nodiscard]] constexpr Angle perpendicular(bool plus90deg = true) const {
+        return plus90deg ? *this + M_PI_2 : *this + 3 * M_PI_2;
+    }
+
     [[nodiscard]] constexpr Angle operator+(Angle rhs) const {
         return normalize(this->angle_index + rhs.angle_index);
     }
