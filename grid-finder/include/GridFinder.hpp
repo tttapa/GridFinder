@@ -267,21 +267,25 @@ class GridMask {
         // If there are multiple elements with the same maximum count,
         // max_element will return an iterator to the first element with this
         // count
-        auto first_max = std::max_element(houghRes.begin(), houghRes.end());
+        auto max = std::max_element(houghRes.begin(), houghRes.end());
         // Find the first element after the first maximum that has a lower count
         // and then subtract one to get the last element that has the maximum
         // count
         // If no element with a lower count is found, find_if returns
         // houghRes.end(), which means that last_max will be an iterator to
         // the last element of the array.
-        auto last_max = std::find_if(first_max, houghRes.end(), [&](auto res) {
-            return res.count < first_max->count;
+        auto first_max = std::find_if(
+            std::make_reverse_iterator(max), houghRes.rend(),
+            [&](auto res) { return res.count < max->count - max->count / 8; });
+        auto last_max = std::find_if(max, houghRes.end(), [&](auto res) {
+            return res.count < max->count - max->count / 8;
         });
-        if (first_max == houghRes.begin() || last_max == houghRes.end())
+        if (first_max == houghRes.rend() || last_max == houghRes.end())
             cerr << ANSIColors::red
                  << "Warning: angle with maximum count could lie outside of "
                     "the specified range\r\n"
                  << ANSIColors::reset;
+        --first_max;
         --last_max;
 
         return {
