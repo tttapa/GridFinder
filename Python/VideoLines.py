@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import py_grid_finder as gr
 from math import cos, sin
+from timeit import default_timer as timer
 
 
 def main():
@@ -14,24 +15,29 @@ def main():
     out = cv2.VideoWriter('out.avi', cv2.VideoWriter_fourcc(
         'M', 'J', 'P', 'G'), fps, (frame_width, frame_height))
 
-    framectr = 1
+    time = 0
+    framectr = 0
     result, image = video.read()
     while result and video.isOpened():
         try:
+            framectr += 1
+            start = timer()
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             mask = redmask(image)
             processed = processFrame(image, mask)
-            mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(mask, str(framectr), (16, frame_height - 16),
-                        font, 1, (0, 100, 255), 2, cv2.LINE_AA)
-            outimg = np.concatenate((processed, mask), axis=1)
-            out.write(cv2.cvtColor(outimg, cv2.COLOR_RGB2BGR))
         except Exception as e:
             print(e)
         result, image = video.read()
-        framectr += 1
+        end = timer()
+        time += end - start
+        mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(mask, str(framectr), (16, frame_height - 16),
+                    font, 1, (0, 100, 255), 2, cv2.LINE_AA)
+        outimg = np.concatenate((processed, mask), axis=1)
+        out.write(cv2.cvtColor(outimg, cv2.COLOR_RGB2BGR))
 
+    print("{} fps".format(framectr / time))
     video.release()
     out.release()
 
