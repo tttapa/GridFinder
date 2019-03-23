@@ -474,8 +474,6 @@ class GridMask {
             Pixel pixel;
             bool valid;
         } result;
-        cout << "FindWhiteAlongLine " << start << ", " << angle << ", "
-             << minWidth << endl;
         BresenhamLine path = {start, angle, W, H};
         Pixel pixel;
         size_t width;
@@ -484,13 +482,11 @@ class GridMask {
             while (path.hasNext() && get(pixel) == 0x00)
                 pixel = path.next();
             Pixel firstWhite = pixel;
-            cout << "first white = " << firstWhite << endl;
             size_t firstWhiteDistance = path.getCurrentLength();
             while (path.hasNext() && get(pixel) != 0x00)
                 pixel = path.next();
             // TODO: OBOE, but I don't really care
             Pixel firstBlack = pixel;
-            cout << "first black = " << firstBlack << endl;
 
             size_t firstBlackDistance = path.getCurrentLength();
             width                     = firstBlackDistance - firstWhiteDistance;
