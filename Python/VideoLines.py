@@ -19,17 +19,15 @@ def main():
     framectr = 0
     result, image = video.read()
     while result and video.isOpened():
+        framectr += 1
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        mask = redmask(image)
         try:
-            framectr += 1
-            start = timer()
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            mask = redmask(image)
-            processed = processFrame(image, mask)
+            processed, frametime = processFrame(image, mask)
+            time += frametime
         except Exception as e:
             print(e)
         result, image = video.read()
-        end = timer()
-        time += end - start
         mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(mask, str(framectr), (16, frame_height - 16),
@@ -53,8 +51,11 @@ def showLine(line, color, image):
 
 
 def processFrame(image, mask):
+    start = timer()
     gf = gr.GridFinder(mask)
     lines, points = gf.findSquare()
+    end = timer()
+    time = end - start
 
     colors = [(0, 80, 255), (0, 200, 255), (0, 255, 0),
               (255, 255, 0), (255, 150, 0)]
@@ -67,7 +68,7 @@ def processFrame(image, mask):
         point = (round(point.x), round(point.y))
         cv2.circle(image, point, 3, (255, 0, 0), -1)
 
-    return image
+    return image, time
 
 
 def redmask(image):
