@@ -12,12 +12,13 @@
 python_bin=$1
 python_version_dot=$(${python_bin} -c 'import sys; print(sys.version_info[0], sys.version_info[1], sep=".")')
 python_version_no_dot=$(${python_bin} -c 'import sys; print(sys.version_info[0], sys.version_info[1], sep="")')
+python_arch=$(${python_bin} -c 'import platform; print(platform.machine())')
 echo "Using Python $python_version_dot (${python_bin})"
 
 # Build the Wheel package
 $python_bin setup.py bdist_wheel
 # List all Wheels compatible with this Python version
-wheels=($(ls dist/py_grid_finder-*-cp${python_version_no_dot}-cp${python_version_no_dot}m-linux_x86_64.whl))
+wheels=($(ls dist/py_grid_finder-*-cp${python_version_no_dot}-cp${python_version_no_dot}m-linux_${python_arch}.whl))
 # Sort them by version number
 wheels=($(sort --version-sort <<< ${wheels[*]}))
 echo "${wheels[*]}"
