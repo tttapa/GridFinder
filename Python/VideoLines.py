@@ -15,16 +15,24 @@ def main():
     out = cv2.VideoWriter('out.avi', cv2.VideoWriter_fourcc(
         'M', 'J', 'P', 'G'), fps, (frame_width, frame_height))
 
-    time = 0
+    gr_time = 0
+    hsv_time = 0
+    mask_time = 0
     framectr = 0
     result, image = video.read()
     while result and video.isOpened():
         framectr += 1
+        start = timer()
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        end = timer()
+        hsv_time += end - start
+        start = timer()
         mask = redmask(image)
+        end = timer()
+        mask_time += end - start
         try:
-            processed, frametime = processFrame(image, mask)
-            time += frametime
+            processed, time = processFrame(image, mask)
+            gr_time += time
         except Exception as e:
             print(e)
         result, image = video.read()
@@ -35,7 +43,12 @@ def main():
         outimg = np.concatenate((processed, mask), axis=1)
         out.write(cv2.cvtColor(outimg, cv2.COLOR_RGB2BGR))
 
-    print("{} fps".format(framectr / time))
+    total_time = hsv_time + mask_time + gr_time
+    print("HSV conversion : {:4d} fps".format(round(framectr / hsv_time)))
+    print("Mask           : {:4d} fps".format(round(framectr / mask_time)))
+    print("GridFinder     : {:4d} fps".format(round(framectr / gr_time)))
+    print("++++++++++++++")
+    print("Combined       : {:4d} fps".format(round(framectr / total_time)))
     video.release()
     out.release()
 
