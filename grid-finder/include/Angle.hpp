@@ -24,6 +24,15 @@ struct CosSin {
     [[nodiscard]] constexpr double sind() const {
         return (double) sin / getScalingFactor();
     }
+
+    [[nodiscard]] constexpr float cosf() const {
+        return (float) cos / getScalingFactor();
+    }
+
+    [[nodiscard]] constexpr float sinf() const {
+        return (float) sin / getScalingFactor();
+    }
+
     [[nodiscard]] constexpr CosSin perpendicular(bool plus90deg = true) const {
         return plus90deg ? CosSin{-sin, cos} : CosSin{sin, -cos};
     }
@@ -72,6 +81,14 @@ class Angle {
 
     [[nodiscard]] constexpr double sind() const {
         return (double) sin() / CosSin::getScalingFactor();
+    }
+
+    [[nodiscard]] constexpr float cosf() const {
+        return (float) cos() / CosSin::getScalingFactor();
+    }
+
+    [[nodiscard]] constexpr float sinf() const {
+        return (float) sin() / CosSin::getScalingFactor();
     }
 
     [[nodiscard]] constexpr Angle opposite() const { return *this + M_PI; }

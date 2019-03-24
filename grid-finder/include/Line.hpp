@@ -6,8 +6,8 @@
 #include <ostream>
 
 struct Point {
-    double x;
-    double y;
+    float x;
+    float y;
 
     constexpr bool operator==(Point rhs) const {
         return this->x == rhs.x && this->y == rhs.y;
@@ -24,34 +24,36 @@ using std::cout;
 using std::endl;
 
 class Line {
-  private:
-    const ColVector<3> homogCoordinates;
+    using ColVec3f = TColVector<float, 3>;
 
   public:
-    Line(ColVector<3> homogCoordinates) : homogCoordinates(homogCoordinates) {}
+    Line(ColVec3f homogCoordinates) : homogCoordinates(homogCoordinates) {}
     Line(Pixel p, CosSin slope)
         : homogCoordinates{
-              slope.sind(),
-              -slope.cosd(),
-              -slope.sind() * p.x + slope.cosd() * p.y,
+              slope.sinf(),
+              -slope.cosf(),
+              -slope.sinf() * p.x + slope.cosf() * p.y,
           } {}
 
     bool rightOfPoint(Pixel point) {
-        double signedDistance = homogCoordinates[0] * point.x +
-                                homogCoordinates[1] * point.y +
-                                homogCoordinates[2];
+        float signedDistance = homogCoordinates[0] * point.x +
+                               homogCoordinates[1] * point.y +
+                               homogCoordinates[2];
         return signedDistance >= 0;
     }
 
     bool leftOfPoint(Pixel point) {
-        double signedDistance = homogCoordinates[0] * point.x +
-                                homogCoordinates[1] * point.y +
-                                homogCoordinates[2];
+        float signedDistance = homogCoordinates[0] * point.x +
+                               homogCoordinates[1] * point.y +
+                               homogCoordinates[2];
         return signedDistance <= 0;
     }
 
     static Point intersect(Line a, Line b) {
-        ColVector<3> crss = cross(a.homogCoordinates, b.homogCoordinates);
+        ColVec3f crss = cross(a.homogCoordinates, b.homogCoordinates);
         return {crss[0] / crss[2], crss[1] / crss[2]};
     }
+
+  private:
+    const ColVec3f homogCoordinates;
 };
