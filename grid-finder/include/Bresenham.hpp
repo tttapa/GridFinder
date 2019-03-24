@@ -7,7 +7,7 @@
 
 class BresenhamLine {
   public:
-    BresenhamLine(Pixel start, int cos, int sin, size_t w, size_t h)
+    BresenhamLine(Pixel start, int cos, int sin, uint w, uint h)
         : px0(start), px(start),  // Starting point
           dx(cos),
           dy(sin),  // cosine and sine of the slope of the line (scaled)
@@ -22,15 +22,15 @@ class BresenhamLine {
             error = (ady - adx) / 2;
     }
 
-    BresenhamLine(Pixel start, CosSin angle, size_t w, size_t h)
+    BresenhamLine(Pixel start, CosSin angle, uint w, uint h)
         : BresenhamLine(start, angle.cos, angle.sin, w, h) {}
 
-    BresenhamLine(Pixel start, double angle, size_t w, size_t h)
+    BresenhamLine(Pixel start, double angle, uint w, uint h)
         : BresenhamLine(start, cos(angle), sin(angle), w, h) {}
 
     bool hasNext() const { return px.inRange(w, h); }
 
-    size_t getCurrentLength() const { return length; }
+    uint getCurrentLength() const { return length; }
 
     Pixel next() {
         if (!hasNext())
@@ -71,9 +71,9 @@ class BresenhamLine {
     int adx, ady;
     int xinc, yinc;
     bool steep;
-    size_t w, h;
+    uint w, h;
     int error;
-    size_t length = 0;
+    uint length = 0;
 
     template <typename T>
     static constexpr int sgn(T val) {

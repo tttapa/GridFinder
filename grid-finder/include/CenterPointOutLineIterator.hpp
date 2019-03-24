@@ -1,14 +1,14 @@
 #pragma once
 
-#include <cstddef>  // size_t
+#include <uint.hpp>  // uint
 
 class CenterPointOutLineIterator {
   public:
-    CenterPointOutLineIterator(size_t length)
+    CenterPointOutLineIterator(uint length)
         : length(length), center((length - 1) / 2), x(center) {}
 
-    size_t next() {
-        size_t result = x;
+    uint next() {
+        uint result = x;
         x = 2 * center - x;
         if (result <= center)
             ++x;
@@ -17,12 +17,12 @@ class CenterPointOutLineIterator {
 
     bool hasNext() const { return x < length; }
 
-    size_t getCenter() const {
+    uint getCenter() const {
         return center;
     }
 
   private:
-    const size_t length;
-    const size_t center;
-    size_t x;
+    const uint length;
+    const uint center;
+    uint x;
 };
