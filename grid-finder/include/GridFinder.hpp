@@ -398,9 +398,9 @@ class GridMask {
 
         if (widthUpper >= maxLineWidth || widthLower >= maxLineWidth)
             return {Pixel(), 0, false};  // return invalid pixel
-
+#ifdef DEBUG
         cout << "widthUpper = " << widthUpper << ", widthLower = " << widthLower << endl;
-
+#endif
         int middlePointCorrection = widthUpper - widthLower;
 
         bool corrDirection = middlePointCorrection > 0;
