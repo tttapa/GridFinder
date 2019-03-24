@@ -4,17 +4,18 @@
 #include <ostream>
 
 struct Pixel {
-    constexpr Pixel(uint x, uint y) : x(x), y(y) {}
+    template <class T, class U>
+    constexpr Pixel(T x, U y) : x(x), y(y) {}
     constexpr Pixel() : x(-1), y(-1) {}
-    uint x, y;
-    bool isValid() const { return x != (uint) -1 && y != (uint) -1; }
+    uint_t x, y;
+    bool isValid() const { return x != (uint_t) -1 && y != (uint_t) -1; }
     bool operator==(Pixel other) const {
         return this->x == other.x && this->y == other.y;
     }
     bool operator!=(Pixel other) const {
         return this->x != other.x || this->y != other.y;
     }
-    bool inRange(uint w, uint h) const {
+    bool inRange(uint_t w, uint_t h) const {
         // Unsigned comparison also checks for >= 0
         return x < w && y < h;
     }

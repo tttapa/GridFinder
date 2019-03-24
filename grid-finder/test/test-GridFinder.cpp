@@ -180,8 +180,8 @@ TEST(GridMask, getStartingPointNoWhitePixels) {
 }
 
 TEST(GridMask, Hough) {
-    constexpr uint W = 410;
-    constexpr uint H = 308;
+    constexpr uint_t W = 410;
+    constexpr uint_t H = 308;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI / 7;
@@ -203,8 +203,8 @@ TEST(GridMask, Hough) {
 }
 
 TEST(GridMask, findLineAngleAccurate) {
-    constexpr uint W = 410;
-    constexpr uint H = 308;
+    constexpr uint_t W = 410;
+    constexpr uint_t H = 308;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI / 7;
@@ -219,8 +219,8 @@ TEST(GridMask, findLineAngleAccurate) {
 }
 
 TEST(GridMask, findLineAngleAccurateZero) {
-    constexpr uint W = 410;
-    constexpr uint H = 308;
+    constexpr uint_t W = 410;
+    constexpr uint_t H = 308;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 0;
@@ -235,8 +235,8 @@ TEST(GridMask, findLineAngleAccurateZero) {
 }
 
 TEST(GridMask, findLineAngleAccuratePI) {
-    constexpr uint W = 410;
-    constexpr uint H = 308;
+    constexpr uint_t W = 410;
+    constexpr uint_t H = 308;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI;
@@ -251,8 +251,8 @@ TEST(GridMask, findLineAngleAccuratePI) {
 }
 
 TEST(GridMask, findLineAngleAccuratePI2) {
-    constexpr uint W = 410;
-    constexpr uint H = 308;
+    constexpr uint_t W = 410;
+    constexpr uint_t H = 308;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI_2;
@@ -267,8 +267,8 @@ TEST(GridMask, findLineAngleAccuratePI2) {
 }
 
 TEST(GridMask, findLineAngleAccurateMinusPI2) {
-    constexpr uint W = 410;
-    constexpr uint H = 308;
+    constexpr uint_t W = 410;
+    constexpr uint_t H = 308;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 2 * M_PI - M_PI_2;
@@ -283,8 +283,8 @@ TEST(GridMask, findLineAngleAccurateMinusPI2) {
 }
 
 TEST(GridMask, findLineAngleAccuratePI4) {
-    constexpr uint W = 410;
-    constexpr uint H = 308;
+    constexpr uint_t W = 410;
+    constexpr uint_t H = 308;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI_4;
@@ -299,8 +299,8 @@ TEST(GridMask, findLineAngleAccuratePI4) {
 }
 
 TEST(GridMask, findLineAngleAccurateRandomAngle) {
-    constexpr uint W = 410;
-    constexpr uint H = 308;
+    constexpr uint_t W = 410;
+    constexpr uint_t H = 308;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 23.0 / 17;
@@ -315,8 +315,8 @@ TEST(GridMask, findLineAngleAccurateRandomAngle) {
 }
 
 TEST(GridMask, findLineAngleAccurateRange110) {
-    constexpr uint W = 160;
-    constexpr uint H = 90;
+    constexpr uint_t W = 160;
+    constexpr uint_t H = 90;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 110_deg;
@@ -335,8 +335,8 @@ TEST(GridMask, findLineAngleAccurateRange110) {
 }
 
 TEST(GridMask, findLineAngleAccurateRange20) {
-    constexpr uint W = 160;
-    constexpr uint H = 90;
+    constexpr uint_t W = 160;
+    constexpr uint_t H = 90;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 20_deg;
@@ -355,8 +355,8 @@ TEST(GridMask, findLineAngleAccurateRange20) {
 }
 
 TEST(GridMask, findLineAngleAccurateRange340) {
-    constexpr uint W = 160;
-    constexpr uint H = 90;
+    constexpr uint_t W = 160;
+    constexpr uint_t H = 90;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     angle_t angle       = 340_deg;
@@ -395,8 +395,8 @@ TEST(GridMask, getWidth) {
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    uint result = gm.getWidthAtPointOnLine(pixel, angle);
-    uint expect = 3;
+    uint_t result = gm.getWidthAtPointOnLine(pixel, angle);
+    uint_t expect = 3;
     // (7, 5) has a width of 3, starting from the base line through (7, 3)
 
     EXPECT_EQ(result, expect);
@@ -426,8 +426,8 @@ TEST(GridMask, getWidth45) {
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    uint result = gm.getWidthAtPointOnLine(pixel, angle, 9);
-    uint expect = 3;
+    uint_t result = gm.getWidthAtPointOnLine(pixel, angle, 9);
+    uint_t expect = 3;
     // (7, 5) has a width of 3, starting from the base line through (7, 3)
 
     EXPECT_EQ(result, expect);
@@ -457,8 +457,8 @@ TEST(GridMask, getWidth135) {
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    uint result = gm.getWidthAtPointOnLine(pixel, angle, 9);
-    uint expect = 3;
+    uint_t result = gm.getWidthAtPointOnLine(pixel, angle, 9);
+    uint_t expect = 3;
     // (7, 5) has a width of 3, starting from the base line through (7, 3)
 
     EXPECT_EQ(result, expect);
@@ -488,8 +488,8 @@ TEST(GridMask, getWidth225) {
     gm_draw.print(cout) << endl;
     gm.print(cout);
 
-    uint result = gm.getWidthAtPointOnLine(pixel, angle, 9);
-    uint expect = 3;
+    uint_t result = gm.getWidthAtPointOnLine(pixel, angle, 9);
+    uint_t expect = 3;
     // (7, 5) has a width of 3, starting from the base line through (7, 3)
 
     EXPECT_EQ(result, expect);
@@ -624,7 +624,7 @@ TEST(GridMask, getMiddleCross) {
     CosSin angle              = angle_t(45_deg);
     CosSin perpendicularAngle = angle.perpendicular();
 
-    for (uint i = 0; i < 4; ++i) {
+    for (uint_t i = 0; i < 4; ++i) {
         gm.drawLine({0, i}, angle);
         gm.drawLine({i, 0}, angle);
         gm.drawLine({79, i}, perpendicularAngle);
@@ -647,7 +647,7 @@ TEST(GridMask, getFirstLines) {
 
     angle_t angle = 22.5_deg;
 
-    for (uint i = 0; i < 5; ++i) {
+    for (uint_t i = 0; i < 5; ++i) {
         gm.drawLine({0, i}, angle);
     }
     gm.print(cout);

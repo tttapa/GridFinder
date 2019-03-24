@@ -6,7 +6,7 @@
 #include <limits>
 #include <ostream>
 
-template <uint>
+template <uint_t>
 class Angle;
 
 struct CosSin {
@@ -46,19 +46,19 @@ inline std::ostream &operator<<(std::ostream &os, CosSin angle) {
     return os << angle.rad();
 }
 
-template <uint Resolution>
+template <uint_t Resolution>
 class Angle {
   private:
-    uint angle_index;
+    uint_t angle_index;
 
   public:
     constexpr Angle() : angle_index(0) {}
-    constexpr explicit Angle(uint angleIndex) : angle_index(angleIndex) {}
+    constexpr explicit Angle(uint_t angleIndex) : angle_index(angleIndex) {}
     constexpr explicit Angle(int angleIndex) : angle_index(angleIndex) {}
     constexpr Angle(double angle) : Angle{getIndex(angle)} {};
     constexpr Angle(long double angle) : Angle{getIndex(angle)} {};
 
-    static constexpr uint resolution() { return Resolution; }
+    static constexpr uint_t resolution() { return Resolution; }
 
     [[nodiscard]] constexpr operator CosSin() const {
         return {cosines[angle_index], sines[angle_index]};
@@ -69,7 +69,7 @@ class Angle {
     [[nodiscard]] constexpr double rad() const { return getAngle(angle_index); }
     [[nodiscard]] constexpr double deg() const { return rad() * 180 / M_PI; }
 
-    [[nodiscard]] constexpr uint getIndex() const { return angle_index; }
+    [[nodiscard]] constexpr uint_t getIndex() const { return angle_index; }
 
     [[nodiscard]] constexpr int cos() const { return cosines[angle_index]; }
 
@@ -101,7 +101,7 @@ class Angle {
         return normalize(this->angle_index + rhs.angle_index);
     }
 
-    [[nodiscard]] constexpr Angle operator/(uint divisor) const {
+    [[nodiscard]] constexpr Angle operator/(uint_t divisor) const {
         return angle_index / divisor;
     }
 
@@ -109,7 +109,7 @@ class Angle {
         return this->angle_index == rhs.angle_index;
     }
 
-    [[nodiscard]] static constexpr Angle normalize(uint angle_index) {
+    [[nodiscard]] static constexpr Angle normalize(uint_t angle_index) {
         if (angle_index >= Resolution)
             angle_index -= Resolution;
         return Angle(angle_index);
@@ -120,25 +120,25 @@ class Angle {
         auto last  = last_angle.angle_index;
         if (first > last)
             last += resolution();
-        uint angle = (first + last) / 2;
+        uint_t angle = (first + last) / 2;
         return normalize(angle);
     }
 
-    static constexpr int cos(uint angleIndex) {
+    static constexpr int cos(uint_t angleIndex) {
         return std::round(std::cos(step() * angleIndex) *
                           CosSin::getScalingFactor());
     }
 
-    static constexpr int sin(uint angleIndex) {
+    static constexpr int sin(uint_t angleIndex) {
         return std::round(std::sin(step() * angleIndex) *
                           CosSin::getScalingFactor());
     }
 
-    static constexpr uint getIndex(double angle) {
+    static constexpr uint_t getIndex(double angle) {
         return round(angle / step());
     }
 
-    static constexpr double getAngle(uint angleIndex) {
+    static constexpr double getAngle(uint_t angleIndex) {
         return angleIndex * step();
     }
 
@@ -146,14 +146,14 @@ class Angle {
 
     static constexpr std::array<int, Resolution> calculateCosLut() {
         std::array<int, Resolution> cosines = {};
-        for (uint i = 0; i < Resolution; ++i)
+        for (uint_t i = 0; i < Resolution; ++i)
             cosines[i] = cos(i);
         return cosines;
     }
 
     static constexpr std::array<int, Resolution> calculateSinLut() {
         std::array<int, Resolution> sines = {};
-        for (uint i = 0; i < Resolution; ++i)
+        for (uint_t i = 0; i < Resolution; ++i)
             sines[i] = sin(i);
         return sines;
     }
@@ -164,17 +164,17 @@ class Angle {
 
 using angle_t = Angle<360>;
 
-template <uint Resolution>
+template <uint_t Resolution>
 std::ostream &operator<<(std::ostream &os, Angle<Resolution> angle) {
     return os << angle.deg() << "°";
 }
 
-template <uint Resolution>
+template <uint_t Resolution>
 constexpr bool operator==(Angle<Resolution> lhs, CosSin rhs) {
     return lhs.cos() == rhs.cos && lhs.sin() == rhs.sin;
 }
 
-template <uint Resolution>
+template <uint_t Resolution>
 constexpr bool operator==(CosSin lhs, Angle<Resolution> rhs) {
     return lhs.cos == rhs.cos() && lhs.sin == rhs.sin();
 }
