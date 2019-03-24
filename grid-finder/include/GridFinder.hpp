@@ -202,7 +202,9 @@ class GridMask {
     }
 
     HoughResult findLineAngleAccurate(Pixel px) {
+#ifdef DEBUG
         cout << "findLineAngleAccurate(" << px << ")" << endl;
+#endif
         std::array<HoughResult, angle_t::resolution()> houghRes;
         for (size_t i = 0; i < angle_t::resolution(); ++i)
             houghRes.at(i) = hough(px, angle_t(i));
@@ -228,10 +230,11 @@ class GridMask {
             if (first_max == max)
                 break;
         }
-
+#ifdef DEBUG
         cout << "first_max = " << first_max->angle << endl;
         cout << "last_max = " << last_max->angle << endl;
         cout << "count = " << max->count << endl;
+#endif
 
         return {
             angle_t::average(first_max->angle, last_max->angle),
@@ -359,8 +362,10 @@ class GridMask {
                 // so that's one pixel too much. Fix at the end of the function.
                 maxWidth = perpendicular.getCurrentLength();
         }
+#ifdef DEBUG
         cout << "getWidthAtPointOnLine(" << pixel << ") → " << (maxWidth - 1)
              << endl;
+#endif
         return maxWidth - 1;
     }
 
@@ -372,7 +377,9 @@ class GridMask {
 
     GetMiddleResult getMiddle(Pixel pointOnLine, angle_t angle,
                               size_t max_gap = MAX_GAP) {
+#ifdef DEBUG
         cout << "getMiddle(" << pointOnLine << ", " << angle << ")" << endl;
+#endif
         if (get(pointOnLine) == 0x00)
             return {Pixel(), 0, false};  // return invalid pixel
 
@@ -412,8 +419,10 @@ class GridMask {
     constexpr static size_t RETRY_JUMP_DISTANCE = (W + H) / 20;  // TODO
 
     GetMiddleResult getMiddleWithRetries(Pixel start, angle_t angle) {
+#ifdef DEBUG
         cout << "getMiddleWithRetries(" << start << ", " << angle << ")"
              << endl;
+#endif
         GetMiddleResult middle;
         Pixel previousPixel;
         do {
@@ -465,8 +474,10 @@ class GridMask {
 
     LineResult findNextLine(LineResult line, size_t minDistance = 0,
                             size_t offset = 0) {
+#ifdef DEBUG
         cout << "findNextLine(" << line << ", minDistance=" << minDistance
              << ", offset=" << offset << endl;
+#endif
         Line lline     = {line.lineCenter, line.angle};
         bool direction = lline.leftOfPoint(center());
         angle_t angle  = line.angle;
@@ -476,8 +487,9 @@ class GridMask {
             move(line.lineCenter, perp, 2 * line.width + offset);
         if (minDistance)
             searchStart = move(searchStart, line.angle, minDistance);
-
+#ifdef DEBUG
         cout << "searchStart = " << searchStart << endl;
+#endif
 
         size_t minWidth = line.width / 2;
 
@@ -493,7 +505,9 @@ class GridMask {
             Pixel firstBlack = pixel;  // TODO: OBOE, but I don't really care
             Pixel middle     = Pixel::average(firstBlack, firstWhite);
             LineResult possibleLine = checkLine(middle, perp, minWidth);
+#ifdef DEBUG
             cout << possibleLine << endl;
+#endif
             if (possibleLine.valid)
                 return possibleLine;
         } while (path.hasNext());
@@ -501,8 +515,10 @@ class GridMask {
     }
 
     LineResult checkLine(Pixel pixel, angle_t angle, size_t minWidth) {
+#ifdef DEBUG
         cout << "checkLine(" << pixel << ", " << angle
              << ", minWidth=" << minWidth << ")" << endl;
+#endif
         GetMiddleResult middle = getMiddle(pixel, angle);
         if (!middle.valid || middle.width < minWidth)
             // throw std::runtime_error("TODO: No middle point found");
@@ -512,9 +528,11 @@ class GridMask {
         HoughResult result =
             findLineAngleAccurateRange<range>(middle.pixel, angle);
 
-        // if (result.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
-        // throw std::runtime_error("TODO: find a new starting position");
+// if (result.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
+// throw std::runtime_error("TODO: find a new starting position");
+#ifdef DEBUG
         cout << "checkLine: result.count = " << result.count << endl;
+#endif
         bool valid = result.count >= MINIMIM_LINE_WEIGHTED_VOTE_COUNT;
         return {valid, middle.pixel, middle.width, result.angle};
     }
@@ -547,7 +565,9 @@ class GridMask {
                 std::max(secondLine.width, thirdLine.width);
             LineResult fourthLine;
             while (!fourthLine.valid && offset < maxOffset) {
+#ifdef DEBUG
                 cout << "Find fourth line ============================" << endl;
+#endif
                 fourthLine = findNextLine(secondLine, minDistance, offset);
                 if (!fourthLine.valid)
                     fourthLine = findNextLine(thirdLine, minDistance, offset);
