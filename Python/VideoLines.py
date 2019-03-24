@@ -22,14 +22,10 @@ def main():
     result, image = video.read()
     while result and video.isOpened():
         framectr += 1
-        start = timer()
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        end = timer()
-        hsv_time += end - start
-        start = timer()
-        mask = redmask(image)
-        end = timer()
-        mask_time += end - start
+        mask, hsv_duration, mask_duration = redmask(image)
+        hsv_time += hsv_duration
+        mask_time += mask_duration
         try:
             processed, time = processFrame(image, mask)
             gr_time += time
@@ -87,8 +83,12 @@ def processFrame(image, mask):
 
 
 def redmask(image):
+    start = timer()
     hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    end = timer()
+    hsv_duration = end - start
 
+    start = timer()
     lower_red1 = np.array([0, 30, 0])
     upper_red1 = np.array([10, 255, 255])
     mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
@@ -98,7 +98,9 @@ def redmask(image):
     mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
 
     mask = mask1 | mask2
-    return mask
+    end = timer()
+    mask_duration = end - start
+    return mask, hsv_duration, mask_duration
 
 
 if __name__ == '__main__':
