@@ -253,7 +253,7 @@ class GridMask {
         // 0          C-N          C          C+N         R-1
         // C = center
         // N = number of steps around the center
-        // R = resolution (R steps = 360°)
+        // R = resolution (R steps = 720°)
         if (centerAngleIndex - N < angle_t::resolution() &&
             centerAngleIndex + N < angle_t::resolution()) {
             size_t initialAngleIndex = centerAngleIndex - N;
@@ -451,7 +451,7 @@ class GridMask {
         if (!middle.valid)
             throw std::runtime_error("TODO: No middle point found");
 
-        constexpr size_t range = angle_t::resolution() / 24;  // 2 * 15°
+        constexpr size_t range = angle_t::resolution() / 40;  // 2 * 9°
         HoughResult result1 =
             findLineAngleAccurateRange<range>(middle.pixel, firstAngle);
         HoughResult result2 = findLineAngleAccurateRange<range>(
@@ -524,7 +524,7 @@ class GridMask {
             // throw std::runtime_error("TODO: No middle point found");
             return LineResult::invalid();
 
-        constexpr size_t range = angle_t::resolution() / 24;  // 2 * 15°
+        constexpr size_t range = angle_t::resolution() / 40;  // 2 * 9°
         HoughResult result =
             findLineAngleAccurateRange<range>(middle.pixel, angle);
 
