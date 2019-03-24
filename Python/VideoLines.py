@@ -44,11 +44,12 @@ def main():
         out.write(cv2.cvtColor(outimg, cv2.COLOR_RGB2BGR))
 
     total_time = hsv_time + mask_time + gr_time
-    print("HSV conversion : {:4d} fps".format(round(framectr / hsv_time)))
-    print("Mask           : {:4d} fps".format(round(framectr / mask_time)))
-    print("GridFinder     : {:4d} fps".format(round(framectr / gr_time)))
-    print("++++++++++++++")
-    print("Combined       : {:4d} fps".format(round(framectr / total_time)))
+    print("  HSV conversion : {:5d} fps".format(round(framectr / hsv_time)))
+    print("  Mask           : {:5d} fps".format(round(framectr / mask_time)))
+    print("  GridFinder     : {:5d} fps".format(round(framectr / gr_time)))
+    print("+ ──────────────────────────")
+    print("  Combined       : {:5d} fps".format(round(framectr / total_time)))
+    
     video.release()
     out.release()
 
