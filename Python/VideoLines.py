@@ -11,7 +11,7 @@ def main():
     video = cv2.VideoCapture("../Video/easy.mp4")
     frame_width = int(video.get(3)) * 2
     frame_height = int(video.get(4))
-    fps = video.get(cv2.CAP_PROP_FPS)
+    fps = video.get(cv2.CAP_PROP_FPS) / 4
     out = cv2.VideoWriter('out.avi', cv2.VideoWriter_fourcc(
         'M', 'J', 'P', 'G'), fps, (frame_width, frame_height))
 
@@ -65,8 +65,9 @@ def processFrame(image, mask):
             showLine(lines[i], colors[i], image)
 
     for point in points:
-        point = (round(point.x), round(point.y))
-        cv2.circle(image, point, 3, (255, 0, 0), -1)
+        if point:
+            point = (round(point.x), round(point.y))
+            cv2.circle(image, point, 3, (255, 0, 0), -1)
 
     return image, time
 

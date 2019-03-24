@@ -1,8 +1,5 @@
 # Create library target and specify the implementation files to compile.
-add_library(grid_finder
-    src/GridFinder.cpp
-    src/Bresenham.cpp
-)
+add_library(grid_finder INTERFACE)
 
 # Set target include directories 
 #   These are the folders where the compiler will search for included header 
@@ -13,15 +10,13 @@ add_library(grid_finder
 #   to compile the implementation files of the library, users of the library
 #   should not include them.
 target_include_directories(grid_finder
-    PUBLIC
+    INTERFACE
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # Tell CMake to compile this library with C++17 features enabled
-target_compile_features(grid_finder PUBLIC cxx_std_17)
+target_compile_features(grid_finder INTERFACE cxx_std_17)
 
 # Link the library with its dependencies.
 #   This manages both the include directories of the dependencies, as well as  
@@ -29,7 +24,7 @@ target_compile_features(grid_finder PUBLIC cxx_std_17)
 #   Libraries that are used in the public header files should be public,
 #   libraries that are only used in the implementation files should be private.
 target_link_libraries(grid_finder 
-    PUBLIC 
+    INTERFACE 
         matrix
         utilities
 )

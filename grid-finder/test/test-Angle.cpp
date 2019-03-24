@@ -4,7 +4,7 @@
 #include <limits>
 
 TEST(Angle, sincos) {
-    angle_t angle = 60;
+    angle_t angle = 60_deg;
     EXPECT_EQ(angle.cos(),
               static_cast<int>(std::round(
                   std::cos(M_PI / 3) * (std::numeric_limits<int>::max() / 2))));

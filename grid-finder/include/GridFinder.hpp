@@ -28,6 +28,27 @@ inline std::ostream &operator<<(std::ostream &os, HoughResult h) {
     return os << h.angle << " rad: " << h.count;
 }
 
+struct LineResult {
+    constexpr LineResult() : LineResult(false, {}, 0, {}) {}
+    constexpr LineResult(Pixel lineCenter, size_t width, angle_t angle)
+        : valid(true), lineCenter(lineCenter), width(width), angle(angle) {}
+    constexpr LineResult(bool valid, Pixel lineCenter, size_t width,
+                         angle_t angle)
+        : valid(valid), lineCenter(lineCenter), width(width), angle(angle) {}
+    constexpr static LineResult invalid() { return {}; }
+    bool valid;
+    Pixel lineCenter;
+    size_t width;
+    angle_t angle;
+};
+inline std::ostream &operator<<(std::ostream &os, LineResult l) {
+    if (!l.valid)
+        return os << "LineResult::invalid()";
+    else
+        return os << "LineResult(" << l.lineCenter << ", " << l.width << ", "
+                  << l.angle << ")";
+}
+
 template <size_t W, size_t H>
 class GridMask {
   public:
@@ -176,7 +197,7 @@ class GridMask {
     HoughResult findLineAngle(Pixel px) {
         std::array<HoughResult, angle_t::resolution()> houghRes;
         for (size_t i = 0; i < angle_t::resolution(); ++i)
-            houghRes.at(i) = hough(px, i);
+            houghRes.at(i) = hough(px, angle_t(i));
         return *std::max_element(houghRes.begin(), houghRes.end());
     }
 
@@ -184,7 +205,7 @@ class GridMask {
         cout << "findLineAngleAccurate(" << px << ")" << endl;
         std::array<HoughResult, angle_t::resolution()> houghRes;
         for (size_t i = 0; i < angle_t::resolution(); ++i)
-            houghRes.at(i) = hough(px, i);
+            houghRes.at(i) = hough(px, angle_t(i));
         auto max       = std::max_element(houghRes.begin(), houghRes.end());
         auto first_max = max;
         auto last_max  = max;
@@ -234,7 +255,7 @@ class GridMask {
             centerAngleIndex + N < angle_t::resolution()) {
             size_t initialAngleIndex = centerAngleIndex - N;
             for (size_t i = 0; i <= 2 * N; ++i)
-                houghRes.at(i) = hough(px, initialAngleIndex + i);
+                houghRes.at(i) = hough(px, angle_t(initialAngleIndex + i));
         }
         // If the 0-2PI discontinuity is in the first part of the range
         // (< centerAngle)
@@ -246,9 +267,9 @@ class GridMask {
             size_t i = 0;
             for (size_t j = initialAngleIndex; j < angle_t::resolution();
                  ++i, ++j)
-                houghRes.at(i) = hough(px, j);
+                houghRes.at(i) = hough(px, angle_t(j));
             for (size_t j = 0; j <= centerAngleIndex + N; ++i, ++j)
-                houghRes.at(i) = hough(px, j);
+                houghRes.at(i) = hough(px, angle_t(j));
         }
         // If the 0-2PI discontinuity is in the second part of the range
         // (< centerAngle)
@@ -259,10 +280,10 @@ class GridMask {
             size_t i                 = 0;
             for (size_t j = initialAngleIndex; j < angle_t::resolution();
                  ++i, ++j)
-                houghRes.at(i) = hough(px, j);
+                houghRes.at(i) = hough(px, angle_t(j));
             for (size_t j = 0;
                  j <= N + centerAngleIndex - angle_t::resolution(); ++i, ++j)
-                houghRes.at(i) = hough(px, j);
+                houghRes.at(i) = hough(px, angle_t(j));
         } else {
             assert(false);
         }
@@ -328,7 +349,7 @@ class GridMask {
                 if (get(pixel) == 0x00)
                     break;
             }
-            if (perpendicular.getCurrentLength() >= maxLineWidth)
+            if (perpendicular.getCurrentLength() > maxLineWidth)
                 // throw std::runtime_error("Error: Endless loop detected");
                 return maxLineWidth;
 
@@ -338,6 +359,8 @@ class GridMask {
                 // so that's one pixel too much. Fix at the end of the function.
                 maxWidth = perpendicular.getCurrentLength();
         }
+        cout << "getWidthAtPointOnLine(" << pixel << ") → " << (maxWidth - 1)
+             << endl;
         return maxWidth - 1;
     }
 
@@ -347,8 +370,12 @@ class GridMask {
         bool valid;
     };
 
-    GetMiddleResult getMiddle(Pixel pointOnLine, CosSin angle,
+    GetMiddleResult getMiddle(Pixel pointOnLine, angle_t angle,
                               size_t max_gap = MAX_GAP) {
+        cout << "getMiddle(" << pointOnLine << ", " << angle << ")" << endl;
+        if (get(pointOnLine) == 0x00)
+            return {Pixel(), 0, false};  // return invalid pixel
+
         CosSin oppositeAngle = angle.opposite();
         size_t widthUpper1 =
             getWidthAtPointOnLine(pointOnLine, angle, max_gap / 2, true);
@@ -385,6 +412,8 @@ class GridMask {
     constexpr static size_t RETRY_JUMP_DISTANCE = (W + H) / 20;  // TODO
 
     GetMiddleResult getMiddleWithRetries(Pixel start, angle_t angle) {
+        cout << "getMiddleWithRetries(" << start << ", " << angle << ")"
+             << endl;
         GetMiddleResult middle;
         Pixel previousPixel;
         do {
@@ -396,14 +425,7 @@ class GridMask {
     }
 
     constexpr static size_t MINIMIM_LINE_WEIGHTED_VOTE_COUNT =
-        (W + H) / 10;  // TODO
-
-    struct LineResult {
-        bool valid;
-        Pixel lineCenter;
-        size_t width;
-        angle_t angle;
-    };
+        (W + H) / 2;  // TODO
 
     std::array<LineResult, 2> getFirstLines() {
         auto start = getStartingPoint();
@@ -426,8 +448,8 @@ class GridMask {
         HoughResult result2 = findLineAngleAccurateRange<range>(
             middle.pixel, firstAngle.opposite());
 
-        return {{{true, middle.pixel, middle.width, result1.angle},
-                 {true, middle.pixel, middle.width, result2.angle}}};
+        return {{{middle.pixel, middle.width, result1.angle},
+                 {middle.pixel, middle.width, result2.angle}}};
     }
 
     Pixel move(Pixel start, CosSin angle, size_t distance) {
@@ -439,99 +461,103 @@ class GridMask {
         return end;
     }
 
+    constexpr static Pixel center() { return {(W - 1) / 2, (H - 1) / 2}; }
+
     LineResult findNextLine(LineResult line, size_t minDistance = 0,
                             size_t offset = 0) {
+        cout << "findNextLine(" << line << ", minDistance=" << minDistance
+             << ", offset=" << offset << endl;
         Line lline     = {line.lineCenter, line.angle};
-        bool direction = lline.leftOfPoint({W / 2, H / 2});
-        angle_t perp   = line.angle.perpendicular(direction);
+        bool direction = lline.leftOfPoint(center());
+        angle_t angle  = line.angle;
+        angle_t perp   = angle.perpendicular(direction);
 
         Pixel searchStart =
             move(line.lineCenter, perp, 2 * line.width + offset);
         if (minDistance)
             searchStart = move(searchStart, line.angle, minDistance);
 
-        auto searchResult =
-            findWhiteAlongLine(searchStart, line.angle, line.width / 2);
-        if (!searchResult.valid)
-            return {false, searchResult.pixel, 0, perp};
-        // throw std::runtime_error("TODO: no white pixel found");
+        cout << "searchStart = " << searchStart << endl;
 
-        GetMiddleResult middle = getMiddleWithRetries(searchResult.pixel, perp);
-        if (!middle.valid)
-            throw std::runtime_error("TODO: No middle point found");
+        size_t minWidth = line.width / 2;
 
-        constexpr size_t range = angle_t::resolution() / 12;
-        HoughResult result =
-            findLineAngleAccurateRange<range>(middle.pixel, perp);
-        if (result.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
-            throw std::runtime_error("TODO: find a new starting position");
-
-        return {true, middle.pixel, middle.width, result.angle};
-    }
-
-    auto findWhiteAlongLine(Pixel start, CosSin angle, size_t minWidth) {
-        struct {
-            Pixel pixel;
-            bool valid;
-        } result;
-        BresenhamLine path = {start, angle, W, H};
+        BresenhamLine path = {searchStart, angle, W, H};
         Pixel pixel;
-        size_t width;
         do {
             pixel = path.next();
             while (path.hasNext() && get(pixel) == 0x00)
                 pixel = path.next();
             Pixel firstWhite = pixel;
-            size_t firstWhiteDistance = path.getCurrentLength();
             while (path.hasNext() && get(pixel) != 0x00)
                 pixel = path.next();
-            // TODO: OBOE, but I don't really care
-            Pixel firstBlack = pixel;
-
-            size_t firstBlackDistance = path.getCurrentLength();
-            width                     = firstBlackDistance - firstWhiteDistance;
-            if (width >= minWidth) {
-                result.pixel = Pixel::average(firstBlack, firstWhite);
-                result.valid = true;
-                return result;
-            }
+            Pixel firstBlack = pixel;  // TODO: OBOE, but I don't really care
+            Pixel middle     = Pixel::average(firstBlack, firstWhite);
+            LineResult possibleLine = checkLine(middle, perp, minWidth);
+            cout << possibleLine << endl;
+            if (possibleLine.valid)
+                return possibleLine;
         } while (path.hasNext());
-        result.pixel = pixel;
-        result.valid = false;
-        return result;
+        return LineResult::invalid();
     }
 
-    std::tuple<std::array<std::optional<LineResult>, 5>, std::array<Point, 4>>
+    LineResult checkLine(Pixel pixel, angle_t angle, size_t minWidth) {
+        cout << "checkLine(" << pixel << ", " << angle
+             << ", minWidth=" << minWidth << ")" << endl;
+        GetMiddleResult middle = getMiddle(pixel, angle);
+        if (!middle.valid || middle.width < minWidth)
+            // throw std::runtime_error("TODO: No middle point found");
+            return LineResult::invalid();
+
+        constexpr size_t range = angle_t::resolution() / 24;  // 2 * 15°
+        HoughResult result =
+            findLineAngleAccurateRange<range>(middle.pixel, angle);
+
+        // if (result.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
+        // throw std::runtime_error("TODO: find a new starting position");
+        cout << "checkLine: result.count = " << result.count << endl;
+        bool valid = result.count >= MINIMIM_LINE_WEIGHTED_VOTE_COUNT;
+        return {valid, middle.pixel, middle.width, result.angle};
+    }
+
+    std::tuple<std::array<std::optional<LineResult>, 5>,
+               std::array<std::optional<Point>, 4>>
     findSquare() {
         auto firstLines = getFirstLines();
         auto secondLine = findNextLine(firstLines[0]);
         auto thirdLine  = findNextLine(firstLines[1]);
 
         std::array<std::optional<LineResult>, 5> lines;
-        std::array<Point, 4> points;
+        std::array<std::optional<Point>, 4> points;
 
         lines[0] = firstLines[0];
         lines[1] = firstLines[1];
 
         if (secondLine.valid && thirdLine.valid) {
-            lines[2]           = secondLine;
-            lines[3]           = thirdLine;
-            points[0]          = intersect(firstLines[0], secondLine);
-            points[1]          = intersect(firstLines[1], thirdLine);
-            size_t minDistance = std::max(std::abs(points[0].x - points[1].x),
-                                          std::abs(points[0].y - points[1].y));
+            lines[2]  = secondLine;
+            lines[3]  = thirdLine;
+            points[0] = intersect(firstLines[0], secondLine);
+            points[1] = intersect(firstLines[1], thirdLine);
+            size_t minDistance =
+                std::max(std::abs(points[0]->x - points[1]->x),
+                         std::abs(points[0]->y - points[1]->y));
             minDistance -= minDistance / 4;  // use 3/4 of distance
-            size_t offset = 0;
+            size_t offset          = 0;
+            const size_t maxOffset = minDistance / 2;
+            const size_t offsetIncr =
+                std::max(secondLine.width, thirdLine.width);
             LineResult fourthLine;
-            while (!fourthLine.valid && offset < minDistance) {
+            while (!fourthLine.valid && offset < maxOffset) {
+                cout << "Find fourth line ============================" << endl;
                 fourthLine = findNextLine(secondLine, minDistance, offset);
                 if (!fourthLine.valid)
                     fourthLine = findNextLine(thirdLine, minDistance, offset);
-                offset += std::max(secondLine.width, thirdLine.width);
+                offset += offsetIncr;
             }
-            lines[4]  = fourthLine;
-            points[2] = intersect(secondLine, fourthLine);
-            points[3] = intersect(thirdLine, fourthLine);
+            if (fourthLine.valid) {
+                lines[4]  = fourthLine;
+                points[2] = intersect(secondLine, fourthLine);
+                points[3] = intersect(thirdLine, fourthLine);
+            }
         } else if (secondLine.valid) {
             lines[2] = secondLine;
             // TODO

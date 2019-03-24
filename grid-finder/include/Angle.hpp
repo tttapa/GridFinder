@@ -43,11 +43,11 @@ class Angle {
     size_t angle_index;
 
   public:
-    Angle() : angle_index(0) {}
-    Angle(size_t angleIndex) : angle_index(angleIndex) {}
-    Angle(int angleIndex) : angle_index(angleIndex) {}
-    Angle(double angle) : Angle{getIndex(angle)} {};
-    Angle(long double angle) : Angle{getIndex(angle)} {};
+    constexpr Angle() : angle_index(0) {}
+    constexpr explicit Angle(size_t angleIndex) : angle_index(angleIndex) {}
+    constexpr explicit Angle(int angleIndex) : angle_index(angleIndex) {}
+    constexpr Angle(double angle) : Angle{getIndex(angle)} {};
+    constexpr Angle(long double angle) : Angle{getIndex(angle)} {};
 
     static constexpr size_t resolution() { return Resolution; }
 
@@ -58,6 +58,7 @@ class Angle {
     [[nodiscard]] constexpr explicit operator double() const { return rad(); }
 
     [[nodiscard]] constexpr double rad() const { return getAngle(angle_index); }
+    [[nodiscard]] constexpr double deg() const { return rad() * 180 / M_PI; }
 
     [[nodiscard]] constexpr size_t getIndex() const { return angle_index; }
 
@@ -94,7 +95,7 @@ class Angle {
     [[nodiscard]] static constexpr Angle normalize(size_t angle_index) {
         if (angle_index >= Resolution)
             angle_index -= Resolution;
-        return angle_index;
+        return Angle(angle_index);
     }
 
     constexpr static Angle average(Angle first_angle, Angle last_angle) {
@@ -148,7 +149,7 @@ using angle_t = Angle<360>;
 
 template <size_t Resolution>
 std::ostream &operator<<(std::ostream &os, Angle<Resolution> angle) {
-    return os << (double) angle;
+    return os << angle.deg() << "°";
 }
 
 template <size_t Resolution>

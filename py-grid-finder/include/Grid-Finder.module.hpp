@@ -14,12 +14,16 @@ PYBIND11_MODULE(py_grid_finder, pygridmodule) {
         .def("findNextLine", &GM::findNextLine)
         .def("findSquare", &GM::findSquare);
 
-    using LineResult = GM::LineResult;
     pybind11::class_<LineResult>(pygridmodule, "LineResult")
         .def("isValid", [](LineResult r) { return r.valid; })
         .def("getLineCenter", [](LineResult r) { return r.lineCenter; })
         .def("getWidth", [](LineResult r) { return r.width; })
-        .def("getAngle", [](LineResult r) { return r.angle.rad(); });
+        .def("getAngle", [](LineResult r) { return r.angle.rad(); })
+        .def("__str__", [](LineResult r) {
+            std::stringstream s;
+            s << r;
+            return s.str();
+        });
 
     pygridmodule.def("intersect", [](LineResult a, LineResult b) {
         Point intersection = Line::intersect(Line(a.lineCenter, a.angle),

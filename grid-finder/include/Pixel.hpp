@@ -4,8 +4,8 @@
 #include <ostream>
 
 struct Pixel {
-    Pixel(size_t x, size_t y) : x(x), y(y) {}
-    Pixel() : x(-1), y(-1) {}
+    constexpr Pixel(size_t x, size_t y) : x(x), y(y) {}
+    constexpr Pixel() : x(-1), y(-1) {}
     size_t x, y;
     bool isValid() const { return x != (size_t) -1 && y != (size_t) -1; }
     bool operator==(Pixel other) const {
