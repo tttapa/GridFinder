@@ -347,7 +347,7 @@ class GridMask {
             BresenhamLine perpendicular = {pixelAlongLine, perpendicularAngle,
                                            W, H};
             while (perpendicular.hasNext() &&
-                   perpendicular.getCurrentLength() < maxLineWidth) {
+                   perpendicular.getCurrentLength() <= maxLineWidth) {
                 Pixel pixel = perpendicular.next();
                 if (get(pixel) == 0x00)
                     break;
@@ -375,7 +375,7 @@ class GridMask {
         bool valid;
     };
 
-    GetMiddleResult getMiddle(Pixel pointOnLine, angle_t angle,
+    GetMiddleResult getMiddle(Pixel pointOnLine, CosSin angle,
                               size_t max_gap = MAX_GAP) {
 #ifdef DEBUG
         cout << "getMiddle(" << pointOnLine << ", " << angle << ")" << endl;
@@ -398,6 +398,8 @@ class GridMask {
 
         if (widthUpper >= maxLineWidth || widthLower >= maxLineWidth)
             return {Pixel(), 0, false};  // return invalid pixel
+
+        cout << "widthUpper = " << widthUpper << ", widthLower = " << widthLower << endl;
 
         int middlePointCorrection = widthUpper - widthLower;
 

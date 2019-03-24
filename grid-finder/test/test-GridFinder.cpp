@@ -359,19 +359,19 @@ TEST(GridMask, findLineAngleAccurateRange340) {
     constexpr size_t H = 90;
     GridMask<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
-    double angle       = 340_deg;
+    angle_t angle       = 340_deg;
     BresenhamLine line = {center, angle, W, H};
     while (line.hasNext())
         gm.set(line.next());
 
     // gm.print(cout);
 
-    double result =
+    angle_t result =
         gm.findLineAngleAccurateRange<angle_t::resolution() / 8>(center, angle)
-            .angle.rad();
-    double expect = angle;
+            .angle;
+    angle_t expect = angle;
 
-    EXPECT_NEAR(result, expect, angle_t::step());
+    EXPECT_EQ(result, expect);
 }
 
 TEST(GridMask, getWidth) {
@@ -385,7 +385,7 @@ TEST(GridMask, getWidth) {
         {0, 0, 0, 0, 0, 0, 0, 0, 0},
     }}};
 
-    CosSin angle = angle_t(0_deg);
+    angle_t angle = 0_deg;
     Pixel pixel  = {0, 3};
 
     GridMask<9, 7> gm_draw = {};
@@ -415,7 +415,7 @@ TEST(GridMask, getWidth45) {
         {0, 0, 0, 0, 0, 0, 1, 1, 1},
     }}};
 
-    CosSin angle = angle_t(45_deg);
+    angle_t angle = 45_deg;
 
     Pixel pixel = {0, 0};
 
@@ -446,7 +446,7 @@ TEST(GridMask, getWidth135) {
         {1, 1, 1, 0, 0, 0, 0, 0, 0},
     }}};
 
-    CosSin angle = angle_t(135_deg);
+    angle_t angle = 135_deg;
 
     Pixel pixel = {8, 0};
 
@@ -477,7 +477,7 @@ TEST(GridMask, getWidth225) {
         {0, 0, 0, 0, 0, 0, 1, 1, 1},
     }}};
 
-    CosSin angle = angle_t(225_deg);
+    angle_t angle = 225_deg;
 
     Pixel pixel = {8, 8};
 
@@ -508,7 +508,7 @@ TEST(GridMask, getMiddleHorizontal) {
         {0, 0, 0, 0, 0, 0, 0, 0, 0},
     }}};
 
-    CosSin angle = angle_t(0);
+    angle_t angle = 0_deg;
 
     Pixel pixel = {4, 2};
 
@@ -539,7 +539,7 @@ TEST(GridMask, getMiddleVertical) {
         {0, 1, 1, 1, 1, 1, 1, 1, 0},
     }}};
 
-    CosSin angle = angle_t(M_PI_2);
+    angle_t angle = angle_t(M_PI_2);
 
     Pixel pixel = {2, 4};
 
@@ -571,7 +571,7 @@ TEST(GridMask, getMiddleDiagonalAbove) {
         {0, 0, 0, 0, 0, 0, 1, 1, 1},
     }}};
 
-    CosSin angle = angle_t(M_PI_4);
+    angle_t angle = M_PI_4;
 
     Pixel pixel = {3, 5};
 
@@ -634,9 +634,11 @@ TEST(GridMask, getMiddleCross) {
     gm.print(cout);
 
     Pixel pixel  = {40, 40};
-    Pixel result = gm.getMiddle(pixel, angle, 4).pixel;  // TODO: check width
+    auto middle = gm.getMiddle(pixel, angle, 4);
 
-    EXPECT_FALSE(result.isValid());
+    cout << middle.pixel << ", " << middle.width << endl;
+
+    EXPECT_FALSE(middle.valid);
 }
 
 /*
