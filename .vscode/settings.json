@@ -55,5 +55,6 @@
         "valarray": "cpp",
         "variant": "cpp"
     },
-    "terminal.integrated.cwd": "build"
+    "terminal.integrated.cwd": "build",
+    "python.pythonPath": "${env:HOME}/.local/bin/python3"
 }

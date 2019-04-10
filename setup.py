@@ -60,7 +60,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='py_grid_finder',
-    version='0.0.1',
+    version='0.0.2',
     author='Pieter Pas',
     author_email='pieter.pas@outlook.com',
     description='The Python Grid Finder Module',

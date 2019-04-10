@@ -34,7 +34,8 @@ class BresenhamLine {
 
     Pixel next() {
         if (!hasNext())
-            throw std::out_of_range("No more pixels on line withing canvas!");
+            throw std::out_of_range(
+                "Error: No more pixels on line withing canvas!");
         Pixel result = px;
         if (steep) {
             if (error >= 0) {

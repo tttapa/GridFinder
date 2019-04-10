@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 # Add a 4GiB swap space (needed for large compilations on Raspberry Pi)
 if [ ! -f /swapfile ]; then

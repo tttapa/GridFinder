@@ -8,7 +8,7 @@ from timeit import default_timer as timer
 
 
 def main():
-    video = cv2.VideoCapture("../Video/easy.mp4")
+    video = cv2.VideoCapture("../Video/DroneCam.mp4")
     frame_width = int(video.get(3)) * 2
     frame_height = int(video.get(4))
     fps = video.get(cv2.CAP_PROP_FPS) / 4

@@ -17,9 +17,6 @@ python_version_no_dot=$(${python_bin} -c 'import sys; print(sys.version_info[0],
 python_arch=$(${python_bin} -c 'import platform; print(platform.machine())')
 echo "Using Python $python_version_dot (${python_bin})"
 
-# Install the Wheel module
-$python_bin -m pip install --user wheel
-
 # Build the Wheel package
 $python_bin setup.py bdist_wheel
 # List all Wheels compatible with this Python version
