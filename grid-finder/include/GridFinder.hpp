@@ -52,10 +52,10 @@ class GridFinder {
      *          The direction to look in.
      */
     HoughResult hough(Pixel px, angle_t angle) const {
-        BresenhamLine line   = {px, angle, W, H};
-        uint count           = 0;
+        BresenhamLine line = {px, angle, W, H};
+        uint count         = 0;
         // uint_fast16_t weight = 0;
-        uint previousWhite   = 0;
+        uint previousWhite = 0;
         while (line.hasNext()) {
             Pixel point = line.next();
             // If pixel is white, then add weight to count
@@ -434,8 +434,7 @@ class GridFinder {
     Pixel move(Pixel start, CosSin angle, uint distance) const {
         BresenhamLine path = {start, angle, W, H};
         Pixel end;
-        while (path.hasNext() &&
-               path.getCurrentLength() <= distance)
+        while (path.hasNext() && path.getCurrentLength() <= distance)
             end = path.next();
         return end;
     }
@@ -710,16 +709,15 @@ class GridFinder {
      *          line.
      * @return  // TODO
      */
-    std::optional<LineResult>
-    findNextLine(LineResult line, uint minDistance = 0, uint offset = 0) const {
+    std::optional<LineResult> findNextLine(LineResult line, bool direction,
+                                           uint minDistance = 0,
+                                           uint offset      = 0) const {
 #ifdef DEBUG
         cout << "findNextLine(" << line << ", minDistance=" << minDistance
              << ", offset=" << offset << endl;
 #endif
-        Line mathLine  = {line.lineCenter, line.angle};
-        bool direction = mathLine.leftOfPoint(center());
-        angle_t angle  = line.angle;
-        angle_t perp   = angle.perpendicular(direction);
+        angle_t angle = line.angle;
+        angle_t perp  = angle.perpendicular(direction);
 
         Pixel searchStart = line.lineCenter;
         searchStart       = move(searchStart, perp, 2 * line.width + offset);
@@ -761,10 +759,11 @@ class GridFinder {
     }
 
     std::optional<LineResult> findNextLine(std::optional<LineResult> line,
-                                           uint minDistance = 0,
-                                           uint offset      = 0) const {
-        return line.has_value() ? findNextLine(*line, minDistance, offset)
-                                : std::nullopt;
+                                           bool direction, uint minDistance = 0,
+                                           uint offset = 0) const {
+        return line.has_value()
+                   ? findNextLine(*line, direction, minDistance, offset)
+                   : std::nullopt;
     }
 
     /**
@@ -814,9 +813,19 @@ class GridFinder {
         sq.lines[0] = firstLines[0];
         sq.lines[1] = firstLines[1];
 
+        // Determine the direction to turn in (+90° or -90°)
+        // Check if the first line lies left or right of the center of the frame
+        // and pick the direction that will result in the square containing the
+        // center point (if possible)
+        bool direction = false;
+        if (sq.lines[0].has_value()) {
+            Line mathLine = {sq.lines[0]->lineCenter, sq.lines[0]->angle};
+            direction     = mathLine.leftOfPoint(center());
+        }
+
         // TODO: maybe try again once if it fails?
-        sq.lines[2] = findNextLine(sq.lines[0]);  // second line
-        sq.lines[3] = findNextLine(sq.lines[1]);  // third line
+        sq.lines[2] = findNextLine(sq.lines[0], direction);   // second line
+        sq.lines[3] = findNextLine(sq.lines[1], !direction);  // third line
 
         if (sq.lines[2].has_value() && sq.lines[3].has_value()) {
             sq.points[0] = intersect(*sq.lines[0], *sq.lines[2]);
@@ -840,11 +849,13 @@ class GridFinder {
 
             // Search for the fourth line
             while (!sq.lines[4].has_value() && offset < maxOffset) {
-                sq.lines[4] =  // find the fourth line along the second
-                    findNextLine(sq.lines[2], minDistance, offset);
+                sq.lines[4] =
+                    findNextLine(  // find the fourth line along the second
+                        sq.lines[2], direction, minDistance, offset);
                 if (!sq.lines[4].has_value())  // if not found along second
-                    sq.lines[4] =  //  find the fourth line along the third
-                        findNextLine(sq.lines[3], minDistance, offset);
+                    sq.lines[4] =
+                        findNextLine(  // find the fourth line along the third
+                            sq.lines[3], !direction, minDistance, offset);
                 // next time, try again with a different offset
                 offset += offsetIncr;
             }
