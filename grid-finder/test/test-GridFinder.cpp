@@ -1,11 +1,13 @@
+#define TEMPLATE_GRIDFINDER
+
 #include <Degrees.hpp>
 #include <GridFinder.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
 
-TEST(GridMask, getStartingPointFullLine) {
-    GridMask<4, 9> gm = {{{
+TEST(GridFinder, getStartingPointFullLine) {
+    GridFinder<4, 9> gm = {{{
         {0, 0, 1, 0},
         {0, 0, 1, 0},
         {0, 0, 1, 0},
@@ -22,8 +24,8 @@ TEST(GridMask, getStartingPointFullLine) {
     ASSERT_EQ(result.width, 9);
 }
 
-TEST(GridMask, getStartingPointBottom) {
-    GridMask<4, 9> gm = {{{
+TEST(GridFinder, getStartingPointBottom) {
+    GridFinder<4, 9> gm = {{{
         {0, 0, 0, 0},
         {0, 0, 1, 0},
         {0, 0, 1, 0},
@@ -41,8 +43,8 @@ TEST(GridMask, getStartingPointBottom) {
     ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPointBottomBorder) {
-    GridMask<4, 9> gm = {{{
+TEST(GridFinder, getStartingPointBottomBorder) {
+    GridFinder<4, 9> gm = {{{
         {0, 0, 1, 0},
         {0, 0, 1, 0},
         {0, 0, 0, 0},
@@ -60,8 +62,8 @@ TEST(GridMask, getStartingPointBottomBorder) {
     ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPointTop) {
-    GridMask<4, 9> gm = {{{
+TEST(GridFinder, getStartingPointTop) {
+    GridFinder<4, 9> gm = {{{
         {0, 0, 0, 0},
         {0, 0, 1, 0},
         {0, 0, 1, 0},
@@ -79,8 +81,8 @@ TEST(GridMask, getStartingPointTop) {
     ASSERT_EQ(result.above, false);
 }
 
-TEST(GridMask, getStartingPointTopBorder) {
-    GridMask<4, 9> gm = {{{
+TEST(GridFinder, getStartingPointTopBorder) {
+    GridFinder<4, 9> gm = {{{
         {0, 0, 1, 0},
         {0, 0, 1, 0},
         {0, 0, 1, 0},
@@ -98,8 +100,8 @@ TEST(GridMask, getStartingPointTopBorder) {
     ASSERT_EQ(result.above, false);
 }
 
-TEST(GridMask, getStartingPointOtherColumnEvenLast) {
-    GridMask<4, 6> gm = {{{
+TEST(GridFinder, getStartingPointOtherColumnEvenLast) {
+    GridFinder<4, 6> gm = {{{
         {0, 0, 0, 0},
         {0, 0, 0, 0},
         {0, 0, 0, 0},
@@ -114,8 +116,8 @@ TEST(GridMask, getStartingPointOtherColumnEvenLast) {
     ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPointOtherColumnEvenFirst) {
-    GridMask<4, 6> gm = {{{
+TEST(GridFinder, getStartingPointOtherColumnEvenFirst) {
+    GridFinder<4, 6> gm = {{{
         {0, 0, 0, 0},
         {0, 0, 0, 0},
         {0, 0, 0, 0},
@@ -130,8 +132,8 @@ TEST(GridMask, getStartingPointOtherColumnEvenFirst) {
     ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPointOtherColumnOddFirst) {
-    GridMask<5, 6> gm = {{{
+TEST(GridFinder, getStartingPointOtherColumnOddFirst) {
+    GridFinder<5, 6> gm = {{{
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
@@ -146,8 +148,8 @@ TEST(GridMask, getStartingPointOtherColumnOddFirst) {
     ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPointOtherColumnOddLast) {
-    GridMask<5, 6> gm = {{{
+TEST(GridFinder, getStartingPointOtherColumnOddLast) {
+    GridFinder<5, 6> gm = {{{
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
@@ -162,8 +164,8 @@ TEST(GridMask, getStartingPointOtherColumnOddLast) {
     ASSERT_EQ(result.above, true);
 }
 
-TEST(GridMask, getStartingPointNoWhitePixels) {
-    GridMask<5, 6> gm = {{{
+TEST(GridFinder, getStartingPointNoWhitePixels) {
+    GridFinder<5, 6> gm = {{{
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
@@ -179,10 +181,10 @@ TEST(GridMask, getStartingPointNoWhitePixels) {
     }
 }
 
-TEST(GridMask, Hough) {
+TEST(GridFinder, Hough) {
     constexpr uint W = 410;
     constexpr uint H = 308;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI / 7;
     BresenhamLine line = {center, angle, W, H};
@@ -202,10 +204,10 @@ TEST(GridMask, Hough) {
     EXPECT_TRUE(abs(result - expect) <= step);
 }
 
-TEST(GridMask, findLineAngleAccurate) {
+TEST(GridFinder, findLineAngleAccurate) {
     constexpr uint W = 410;
     constexpr uint H = 308;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI / 7;
     BresenhamLine line = {center, angle, W, H};
@@ -218,10 +220,10 @@ TEST(GridMask, findLineAngleAccurate) {
     EXPECT_NEAR(result, expect, angle_t::step());
 }
 
-TEST(GridMask, findLineAngleAccurateZero) {
+TEST(GridFinder, findLineAngleAccurateZero) {
     constexpr uint W = 410;
     constexpr uint H = 308;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 0;
     BresenhamLine line = {center, angle, W, H};
@@ -234,10 +236,10 @@ TEST(GridMask, findLineAngleAccurateZero) {
     EXPECT_NEAR(result, expect, angle_t::step());
 }
 
-TEST(GridMask, findLineAngleAccuratePI) {
+TEST(GridFinder, findLineAngleAccuratePI) {
     constexpr uint W = 410;
     constexpr uint H = 308;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI;
     BresenhamLine line = {center, angle, W, H};
@@ -250,10 +252,10 @@ TEST(GridMask, findLineAngleAccuratePI) {
     EXPECT_NEAR(result, expect, angle_t::step());
 }
 
-TEST(GridMask, findLineAngleAccuratePI2) {
+TEST(GridFinder, findLineAngleAccuratePI2) {
     constexpr uint W = 410;
     constexpr uint H = 308;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI_2;
     BresenhamLine line = {center, angle, W, H};
@@ -266,10 +268,10 @@ TEST(GridMask, findLineAngleAccuratePI2) {
     EXPECT_NEAR(result, expect, angle_t::step());
 }
 
-TEST(GridMask, findLineAngleAccurateMinusPI2) {
+TEST(GridFinder, findLineAngleAccurateMinusPI2) {
     constexpr uint W = 410;
     constexpr uint H = 308;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 2 * M_PI - M_PI_2;
     BresenhamLine line = {center, angle, W, H};
@@ -282,10 +284,10 @@ TEST(GridMask, findLineAngleAccurateMinusPI2) {
     EXPECT_NEAR(result, expect, angle_t::step());
 }
 
-TEST(GridMask, findLineAngleAccuratePI4) {
+TEST(GridFinder, findLineAngleAccuratePI4) {
     constexpr uint W = 410;
     constexpr uint H = 308;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = M_PI_4;
     BresenhamLine line = {center, angle, W, H};
@@ -298,10 +300,10 @@ TEST(GridMask, findLineAngleAccuratePI4) {
     EXPECT_NEAR(result, expect, angle_t::step());
 }
 
-TEST(GridMask, findLineAngleAccurateRandomAngle) {
+TEST(GridFinder, findLineAngleAccurateRandomAngle) {
     constexpr uint W = 410;
     constexpr uint H = 308;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 23.0 / 17;
     BresenhamLine line = {center, angle, W, H};
@@ -314,10 +316,10 @@ TEST(GridMask, findLineAngleAccurateRandomAngle) {
     EXPECT_NEAR(result, expect, angle_t::step());
 }
 
-TEST(GridMask, findLineAngleAccurateRange110) {
+TEST(GridFinder, findLineAngleAccurateRange110) {
     constexpr uint W = 160;
     constexpr uint H = 90;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 110_deg;
     BresenhamLine line = {center, angle, W, H};
@@ -334,10 +336,10 @@ TEST(GridMask, findLineAngleAccurateRange110) {
     EXPECT_NEAR(result, expect, angle_t::step());
 }
 
-TEST(GridMask, findLineAngleAccurateRange20) {
+TEST(GridFinder, findLineAngleAccurateRange20) {
     constexpr uint W = 160;
     constexpr uint H = 90;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     double angle       = 20_deg;
     BresenhamLine line = {center, angle, W, H};
@@ -354,10 +356,10 @@ TEST(GridMask, findLineAngleAccurateRange20) {
     EXPECT_NEAR(result, expect, angle_t::step());
 }
 
-TEST(GridMask, findLineAngleAccurateRange340) {
+TEST(GridFinder, findLineAngleAccurateRange340) {
     constexpr uint W = 160;
     constexpr uint H = 90;
-    GridMask<W, H> gm  = {};
+    GridFinder<W, H> gm  = {};
     Pixel center       = {W / 2, H / 2};
     angle_t angle       = 340_deg;
     BresenhamLine line = {center, angle, W, H};
@@ -374,8 +376,8 @@ TEST(GridMask, findLineAngleAccurateRange340) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getWidth) {
-    GridMask<9, 7> gm = {{{
+TEST(GridFinder, getWidth) {
+    GridFinder<9, 7> gm = {{{
         {0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0},
         {1, 0, 0, 0, 1, 0, 1, 0, 1},
@@ -388,7 +390,7 @@ TEST(GridMask, getWidth) {
     angle_t angle = 0_deg;
     Pixel pixel  = {0, 3};
 
-    GridMask<9, 7> gm_draw = {};
+    GridFinder<9, 7> gm_draw = {};
     BresenhamLine l        = {pixel, angle, 9, 7};
     while (l.hasNext())
         gm_draw.set(l.next());
@@ -402,8 +404,8 @@ TEST(GridMask, getWidth) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getWidth45) {
-    GridMask<9, 9> gm = {{{
+TEST(GridFinder, getWidth45) {
+    GridFinder<9, 9> gm = {{{
         {1, 1, 1, 0, 0, 0, 0, 0, 0},
         {1, 1, 1, 1, 0, 0, 0, 0, 0},
         {1, 1, 1, 1, 1, 0, 0, 0, 0},
@@ -419,7 +421,7 @@ TEST(GridMask, getWidth45) {
 
     Pixel pixel = {0, 0};
 
-    GridMask<9, 9> gm_draw = {};
+    GridFinder<9, 9> gm_draw = {};
     BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
@@ -433,8 +435,8 @@ TEST(GridMask, getWidth45) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getWidth135) {
-    GridMask<9, 9> gm = {{{
+TEST(GridFinder, getWidth135) {
+    GridFinder<9, 9> gm = {{{
         {0, 0, 0, 0, 0, 0, 1, 1, 1},
         {0, 0, 0, 0, 0, 1, 1, 1, 1},
         {0, 0, 1, 0, 1, 1, 1, 1, 1},
@@ -450,7 +452,7 @@ TEST(GridMask, getWidth135) {
 
     Pixel pixel = {8, 0};
 
-    GridMask<9, 9> gm_draw = {};
+    GridFinder<9, 9> gm_draw = {};
     BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
@@ -464,8 +466,8 @@ TEST(GridMask, getWidth135) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getWidth225) {
-    GridMask<9, 9> gm = {{{
+TEST(GridFinder, getWidth225) {
+    GridFinder<9, 9> gm = {{{
         {1, 1, 1, 0, 0, 0, 0, 0, 0},
         {1, 1, 1, 1, 0, 0, 0, 0, 0},
         {1, 1, 1, 1, 1, 0, 1, 0, 0},
@@ -481,7 +483,7 @@ TEST(GridMask, getWidth225) {
 
     Pixel pixel = {8, 8};
 
-    GridMask<9, 9> gm_draw = {};
+    GridFinder<9, 9> gm_draw = {};
     BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
@@ -495,8 +497,8 @@ TEST(GridMask, getWidth225) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getMiddleHorizontal) {
-    GridMask<9, 9> gm = {{{
+TEST(GridFinder, getMiddleHorizontal) {
+    GridFinder<9, 9> gm = {{{
         {0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 1, 1, 1},
         {0, 0, 1, 0, 1, 1, 1, 1, 0},
@@ -512,7 +514,7 @@ TEST(GridMask, getMiddleHorizontal) {
 
     Pixel pixel = {4, 2};
 
-    GridMask<9, 9> gm_draw = {};
+    GridFinder<9, 9> gm_draw = {};
     BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
@@ -526,8 +528,8 @@ TEST(GridMask, getMiddleHorizontal) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getMiddleVertical) {
-    GridMask<9, 9> gm = {{{
+TEST(GridFinder, getMiddleVertical) {
+    GridFinder<9, 9> gm = {{{
         {0, 1, 1, 1, 1, 1, 1, 1, 0},
         {1, 1, 1, 1, 1, 1, 1, 1, 0},
         {0, 1, 1, 1, 1, 1, 1, 1, 0},
@@ -543,7 +545,7 @@ TEST(GridMask, getMiddleVertical) {
 
     Pixel pixel = {2, 4};
 
-    GridMask<9, 9> gm_draw = {};
+    GridFinder<9, 9> gm_draw = {};
     BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
@@ -558,8 +560,8 @@ TEST(GridMask, getMiddleVertical) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getMiddleDiagonalAbove) {
-    GridMask<9, 9> gm = {{{
+TEST(GridFinder, getMiddleDiagonalAbove) {
+    GridFinder<9, 9> gm = {{{
         {1, 1, 1, 0, 0, 0, 0, 0, 0},
         {1, 1, 1, 1, 0, 0, 0, 0, 0},
         {1, 1, 1, 1, 1, 0, 1, 0, 0},
@@ -575,7 +577,7 @@ TEST(GridMask, getMiddleDiagonalAbove) {
 
     Pixel pixel = {3, 5};
 
-    GridMask<9, 9> gm_draw = {};
+    GridFinder<9, 9> gm_draw = {};
     BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
@@ -588,8 +590,8 @@ TEST(GridMask, getMiddleDiagonalAbove) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getMiddleDiagonalBelow) {
-    GridMask<9, 9> gm = {{{
+TEST(GridFinder, getMiddleDiagonalBelow) {
+    GridFinder<9, 9> gm = {{{
         {1, 1, 1, 0, 0, 0, 0, 0, 0},
         {1, 1, 1, 1, 0, 0, 0, 0, 0},
         {1, 1, 1, 1, 1, 0, 1, 0, 0},
@@ -605,7 +607,7 @@ TEST(GridMask, getMiddleDiagonalBelow) {
 
     Pixel pixel = {5, 3};
 
-    GridMask<9, 9> gm_draw = {};
+    GridFinder<9, 9> gm_draw = {};
     BresenhamLine l        = {pixel, angle, 9, 9};
     while (l.hasNext())
         gm_draw.set(l.next());
@@ -618,8 +620,8 @@ TEST(GridMask, getMiddleDiagonalBelow) {
     EXPECT_EQ(result, expect);
 }
 
-TEST(GridMask, getMiddleCross) {
-    GridMask<80, 80> gm = {};
+TEST(GridFinder, getMiddleCross) {
+    GridFinder<80, 80> gm = {};
 
     CosSin angle              = angle_t(45_deg);
     CosSin perpendicularAngle = angle.perpendicular();
@@ -642,8 +644,8 @@ TEST(GridMask, getMiddleCross) {
 }
 
 /*
-TEST(GridMask, getFirstLines) {
-    GridMask<40 + 19, 19> gm = {};
+TEST(GridFinder, getFirstLines) {
+    GridFinder<40 + 19, 19> gm = {};
 
     angle_t angle = 22.5_deg;
 
@@ -653,7 +655,7 @@ TEST(GridMask, getFirstLines) {
     gm.print(cout);
     auto firstLine = gm.getFirstLines();
 
-    GridMask<40 + 19, 19> gmp = {};
+    GridFinder<40 + 19, 19> gmp = {};
     gmp.drawLine(firstLine.lineCenter, firstLine.angle);
     gmp.print(cout);
 

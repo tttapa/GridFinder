@@ -13,3 +13,8 @@ target_link_libraries(grid_finder_test gtest_main grid_finder)
 # Add the tests to Google Test
 include(GoogleTest)
 gtest_discover_tests(grid_finder_test)
+
+
+### Temp
+add_executable(tmp tmp.cpp)
+target_link_libraries(tmp grid_finder)

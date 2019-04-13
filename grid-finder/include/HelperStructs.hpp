@@ -55,4 +55,15 @@ inline std::ostream &operator<<(std::ostream &os, LineResult l) {
               << l.angle << ")";
 }
 
+inline std::ostream &operator<<(std::ostream &os, const Square &sq) {
+    os << "Square [ ";
+    for (const std::optional<Point> &p : sq.points) {
+        if (p)
+            os << *p << ' ';
+        else
+            os << "ϕ ";
+    }
+    return os << ']';
+}
+
 #pragma endregion

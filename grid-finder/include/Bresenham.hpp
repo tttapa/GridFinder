@@ -4,6 +4,7 @@
 #include <Pixel.hpp>
 #include <cmath>
 #include <limits>
+#include <sstream>
 
 class BresenhamLine {
   public:
@@ -33,9 +34,12 @@ class BresenhamLine {
     uint getCurrentLength() const { return length; }
 
     Pixel next() {
-        if (!hasNext())
-            throw std::out_of_range(
-                "Error: No more pixels on line withing canvas!");
+        if (!hasNext()) {
+            std::ostringstream what;
+            what << "Error: No more pixels on line withing canvas! Pixel = "
+                 << px << ", Size = " << Pixel(w, h);
+            throw std::out_of_range(what.str());
+        }
         Pixel result = px;
         if (steep) {
             if (error >= 0) {

@@ -6,13 +6,14 @@ import py_grid_finder as gr
 from math import cos, sin
 from timeit import default_timer as timer
 
-
-def main():
-    video = cv2.VideoCapture("../Video/DroneCam.mp4")
+def main(filename):
+    video = cv2.VideoCapture("../Video/"+filename+".mp4")
+    if not video.isOpened():
+        raise RuntimeError("Unable to open video file " + filename + ".mp4")
     frame_width = int(video.get(3)) * 2
     frame_height = int(video.get(4))
     fps = video.get(cv2.CAP_PROP_FPS) / 4
-    out = cv2.VideoWriter('out.avi', cv2.VideoWriter_fourcc(
+    out = cv2.VideoWriter(filename+'.out.avi', cv2.VideoWriter_fourcc(
         'M', 'J', 'P', 'G'), fps, (frame_width, frame_height))
 
     gr_time = 0
@@ -63,7 +64,8 @@ def showLine(line, color, image):
 def processFrame(image, mask):
     start = timer()
     gf = gr.GridFinder(mask)
-    lines, points = gf.findSquare()
+    square = gf.findSquare()
+    lines, points = square.lines, square.points
     end = timer()
     time = end - start
 
@@ -104,4 +106,5 @@ def redmask(image):
 
 
 if __name__ == '__main__':
-    main()
+    main('DroneCam')
+    main('easy')

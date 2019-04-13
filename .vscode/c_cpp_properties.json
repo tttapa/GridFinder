@@ -7,7 +7,6 @@
                 "/usr/include/python3.7m",
                 "/home/pieter/GitHub/EAGLE/matrix/include"
             ],
-            "defines": [],
             "compilerPath": "/usr/bin/g++-8",
             "cppStandard": "c++17",
             "cStandard": "c11",

@@ -55,6 +55,8 @@
         "valarray": "cpp",
         "variant": "cpp"
     },
+    "C_Cpp.default.defines": [],
+    "C_Cpp.dimInactiveRegions": true,
     "terminal.integrated.cwd": "build",
     "python.pythonPath": "${env:HOME}/.local/bin/python3",
     "cSpell.words": [
