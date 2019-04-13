@@ -18,39 +18,34 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
+/**
+ * @brief   Struct as a result of the hough function. It gives the most 
+ *          plausible angle, and a vote count that's an indication of how many
+ *          white pixels lie on that line (may be weighted and truncated).
+ * @see     GridMask::hough
+ */
 struct HoughResult {
     angle_t angle;
     uint count;
-    bool operator<(HoughResult other) const {
-        return this->count < other.count;
-    }
+    bool operator<(HoughResult other) const { return count < other.count; }
 };
 
+/**
+ * @brief   Function for printing a HoughResult.
+ * @see     HoughResult
+ */
 inline std::ostream &operator<<(std::ostream &os, HoughResult h) {
     return os << h.angle << " rad: " << h.count;
 }
 
 struct LineResult {
-    constexpr LineResult() : LineResult(false, {}, 0, {}) {}
-    constexpr LineResult(Pixel lineCenter, uint width, angle_t angle)
-        : valid(true), lineCenter(lineCenter), width(width), angle(angle) {}
-    constexpr LineResult(bool valid, Pixel lineCenter, uint width,
-                         angle_t angle)
-        : valid(valid), lineCenter(lineCenter), width(width), angle(angle) {}
-    constexpr static LineResult invalid() { return {}; }
-    bool valid;
     Pixel lineCenter;
     uint width;
     angle_t angle;
-
-    explicit operator bool() const { return valid; }
 };
 inline std::ostream &operator<<(std::ostream &os, LineResult l) {
-    if (!l.valid)
-        return os << "LineResult::invalid()";
-    else
-        return os << "LineResult(" << l.lineCenter << ", " << l.width << ", "
-                  << l.angle << ")";
+    return os << "LineResult(" << l.lineCenter << ", " << l.width << ", "
+              << l.angle << ")";
 }
 
 template <uint W, uint H>
@@ -62,14 +57,9 @@ class GridMask {
     GridMask() : mask{} {}
 
     struct FirstLineEstimate {
-        bool valid;
         Pixel middle;
         uint width;
         angle_t angleEstimate;
-
-        constexpr static FirstLineEstimate invalid() {
-            return {false, {0, 0}, 0, 0.0};
-        }
     };
 
     // TODO: can we make this dynamic?
@@ -77,29 +67,21 @@ class GridMask {
     constexpr static uint MINIMIM_START_LINE_WEIGHTED_VOTE_COUNT =
         (W + H) / 2;  // TODO
 
-    FirstLineEstimate getFirstLine(Pixel point) const {
+    std::optional<FirstLineEstimate> getFirstLine(Pixel point) const {
         // Find an estimate for the slope of the line.
         // Doesn't have to be accurate, just to find the width.
         HoughResult firstResult = findLineAngle(point);
         angle_t firstAngle      = firstResult.angle;
-#ifdef DEBUG
-        cout << "point = " << point << endl;
-        cout << "first angle = " << firstAngle << endl;
-        cout << "vote count = " << firstResult.count << endl;
-#endif
+
         // There could be noise, so the first "line" could be just a white
         // bit of noise
         if (firstResult.count < MINIMIM_START_LINE_WEIGHTED_VOTE_COUNT)
-            return FirstLineEstimate::invalid();
+            return std::nullopt;
 
         GetMiddleResult middle = getMiddleWithRetries(point, firstAngle);
-#ifdef DEBUG
-        cout << "middle.pixel = " << middle.pixel << endl
-             << "middle.width = " << middle.width << endl
-             << "angle estimate = " << firstAngle << endl;
-#endif
+
         if (!middle.valid || middle.width < MINIMUM_START_LINE_WIDTH)
-            return FirstLineEstimate::invalid();
+            return std::nullopt;
 
         return {true, middle.pixel, middle.width, firstAngle};
     }
@@ -108,7 +90,7 @@ class GridMask {
     // a first square that's not in the center of the frame.
     constexpr static uint MAXIMUM_START_LINE_WIDTH = 32;
 
-    FirstLineEstimate getFirstLineEstimate(uint x) const {
+    std::optional<FirstLineEstimate> getFirstLineEstimate(uint x) const {
         if (x >= W)
             throw std::out_of_range("x out of range");
 
@@ -140,7 +122,7 @@ class GridMask {
             y = (first_white + last_white) / 2;
             assert(last_white >= first_white);
             if (last_white - first_white >= MAXIMUM_START_LINE_WIDTH)
-                return FirstLineEstimate::invalid();
+                return std::nullopt;
             else
                 return getFirstLine({x, y});
         }
@@ -155,7 +137,7 @@ class GridMask {
             }
         }
         if (first_white >= H)
-            return FirstLineEstimate::invalid();
+            return std::nullopt;
 
         uint last_white = first_white;
         // If the first white pixel is below the center
@@ -172,7 +154,7 @@ class GridMask {
             y = (first_white + last_white) / 2;
             assert(first_white >= last_white);
             if (first_white - last_white >= MAXIMUM_START_LINE_WIDTH)
-                return FirstLineEstimate::invalid();
+                return std::nullopt;
             else
                 return getFirstLine({x, y});
 
@@ -190,7 +172,7 @@ class GridMask {
             y = (first_white + last_white) / 2;
             assert(last_white >= first_white);
             if (last_white - first_white >= MAXIMUM_START_LINE_WIDTH)
-                return FirstLineEstimate::invalid();
+                return std::nullopt;
             else
                 return getFirstLine({x, y});
         }
@@ -215,25 +197,46 @@ class GridMask {
 
     // TODO: HoughResult --> ? (better name - line with vote count)
     // TODO: hough() --> countVotes()
+    /**
+     * @brief   Starting from the given pixel, move in the direction of the 
+     *          given angle, and count the number of white pixels, weighing them
+     *          more as the distance increases. When more than HOUGH_MAX_GAP 
+     *          consecutive black pixels are encountered, stop looking any 
+     *          farther.
+     * @param   px
+     *          The starting point.
+     * @param   angle
+     *          The direction to look in.
+     */
     HoughResult hough(Pixel px, angle_t angle) const {
         BresenhamLine line   = {px, angle, W, H};
         uint count           = 0;
         uint_fast16_t weight = 0;
         uint previousWhite   = 0;
-        while (line.hasNext() &&
-               line.getCurrentLength() - previousWhite <= HOUGH_MAX_GAP) {
+        while (line.hasNext()) {
             Pixel point = line.next();
             // If pixel is white, then add weight to count
-            // Mask == 0xFFFF if pixel is white, 0x0000 if it's black
             if (get(point)) {
+                // TODO: can we use line.getCurrentLength as weight?
                 count += weight++;
                 previousWhite = line.getCurrentLength();
+            } else if (line.getCurrentLength() - previousWhite <=
+                       HOUGH_MAX_GAP) {
+                break;
             }
-            //    count += 1;
         }
         return {angle, count};
     }
 
+    /** 
+     * @brief   Scan 360° around a given pixel, and find the angle with the most
+     *          white pixels. This version is not very accurate, as it doesn't
+     *          handle the case where multiple angles have the same maximum 
+     *          count.  
+     *          On the other hand, it's a bit faster than the more accurate 
+     *          alternatives, making it a good candidate for finding the first
+     *          angle estimate, to narrow down the search space.
+     */
     HoughResult findLineAngle(Pixel px) const {
         std::array<HoughResult, angle_t::resolution()> houghRes;
         for (uint i = 0; i < angle_t::resolution(); ++i)
@@ -242,9 +245,6 @@ class GridMask {
     }
 
     HoughResult findLineAngleAccurate(Pixel px) {
-#ifdef DEBUG
-        cout << "findLineAngleAccurate(" << px << ")" << endl;
-#endif
         std::array<HoughResult, angle_t::resolution()> houghRes;
         for (uint i = 0; i < angle_t::resolution(); ++i)
             houghRes.at(i) = hough(px, angle_t(i));
@@ -258,8 +258,8 @@ class GridMask {
             // .end() gives index of last element + 1
             if (last_max == houghRes.end())
                 last_max = houghRes.begin();
-            if (last_max == max)
-                break;
+            if (last_max == max)  // If we're back where we started
+                break;            // don't keep going around in circles
         }
 
         // Find first angle with the same count as max_count (- 1 step)
@@ -267,14 +267,9 @@ class GridMask {
             if (first_max == houghRes.begin())
                 first_max = houghRes.end();
             --first_max;
-            if (first_max == max)
-                break;
+            if (first_max == max)  // If we're back where we started
+                break;             // don't keep going around in circles
         }
-#ifdef DEBUG
-        cout << "first_max = " << first_max->angle << endl;
-        cout << "last_max = " << last_max->angle << endl;
-        cout << "count = " << max->count << endl;
-#endif
 
         return {
             angle_t::average(first_max->angle, last_max->angle),
@@ -282,6 +277,9 @@ class GridMask {
         };
     }
 
+    /** 
+     * @brief   Similar to `findLineAngle`
+     */
     template <uint N>
     HoughResult findLineAngleAccurateRange(Pixel px, angle_t centerAngle) {
         static_assert(2 * N < angle_t::resolution());
@@ -334,18 +332,31 @@ class GridMask {
         // max_element will return an iterator to the first element with this
         // count
         auto max = std::max_element(houghRes.begin(), houghRes.end());
+
         // Find the first element after the first maximum that has a lower count
+        // than ⅞ of the maximum count
         // and then subtract one to get the last element that has the maximum
-        // count
+        // count.
         // If no element with a lower count is found, find_if returns
         // houghRes.end(), which means that last_max will be an iterator to
         // the last element of the array.
-        auto pred = [&](auto res) {
+        // In that case, there's probably something wrong: the line might be
+        // too thick, and all counts within the specified range are very high.
+
+        // predicate res.count < 7 * max->count / 8;
+        auto predicateLessThanSevenEighths = [&](auto res) {
             return res.count < max->count - max->count / 8;
         };
-        auto first_max = std::find_if(std::make_reverse_iterator(max),
-                                      houghRes.rend(), pred);
-        auto last_max  = std::find_if(max, houghRes.end(), pred);
+        // std::find_if returns an iterator the first element that satisfies the
+        // predicate
+        //
+        auto first_max =
+            std::find_if(std::make_reverse_iterator(max),  //
+                         houghRes.rend(), predicateLessThanSevenEighths);
+        auto last_max =
+            std::find_if(max,  //
+                         houghRes.end(), predicateLessThanSevenEighths);
+
         if (first_max == houghRes.rend() || last_max == houghRes.end())
             cerr << ANSIColors::red
                  << "Warning: angle with maximum count could lie outside of "
@@ -375,7 +386,7 @@ class GridMask {
     /**
      * @brief   Get the width of the line at a given point.
      * 
-     * Start at the given pixel, and move in the given direction for max_gap
+     * Start at the given pixel, and move in the given direction for maxLineGap
      * pixels, in each pixel, move in the perpendicular direction until a black
      * pixel is encountered. At this point, the half width of the line from the
      * base line is known.  
@@ -386,18 +397,18 @@ class GridMask {
      * 
      * @param pixel 
      * @param angle 
-     * @param max_gap 
+     * @param maxLineGap 
      * @param plus90deg 
      * @return uint 
      */
     uint getWidthAtPointOnLine(Pixel pixel, CosSin angle,
-                               uint max_gap   = MAX_GAP,
-                               bool plus90deg = true) const {
+                               uint maxLineGap = MAX_GAP,
+                               bool plus90deg  = true) const {
         BresenhamLine alongLine   = {pixel, angle, W, H};
         CosSin perpendicularAngle = angle.perpendicular(plus90deg);
         uint maxWidthSoFar        = 0;
-        // Follow a path along the given line for max_gap pixels
-        for (uint i = 0; i <= max_gap && alongLine.hasNext(); ++i) {
+        // Follow a path along the given line for maxLineGap pixels
+        for (uint i = 0; i <= maxLineGap && alongLine.hasNext(); ++i) {
             Pixel pixelAlongLine = alongLine.next();
             // For each pixel along this path, move away from the line,
             // perpendicular to it, untill you find a black pixel, until you
@@ -430,7 +441,6 @@ class GridMask {
     struct GetMiddleResult {
         Pixel pixel;
         uint width;
-        bool valid;
     };
 
     /**
@@ -440,42 +450,37 @@ class GridMask {
      *          A point that lies on the line. 
      * @param   angle
      *          An estimate of the slope of the line.
-     * @param   max_gap
+     * @param   maxLineGap
      *          The maximum gap of black pixels that can be recovered.
      * @return  TODO 
      */
-    GetMiddleResult getMiddle(Pixel pointOnLine, CosSin angle,
-                              uint max_gap = MAX_GAP) const {
-#ifdef DEBUG
-        cout << "getMiddle(" << pointOnLine << ", " << angle << ")" << endl;
-#endif
-        // If the given point does not lie on a line
+    std::optional<GetMiddleResult> getMiddle(Pixel pointOnLine,
+                                             CosSin lineAngle,
+                                             uint maxLineGap = MAX_GAP) const {
+        // If the given point does not lie on a line, we can't find the middle
+        // of the line
         if (get(pointOnLine) == 0x00)
-            return {Pixel(), 0, false};  // return invalid pixel
+            return std::nullopt;
 
-        CosSin oppositeAngle = angle.opposite();
+        CosSin oppositeAngle = lineAngle.opposite();
         // Get the half width of the line in four directions.
-        uint widthUpper1 =
-            getWidthAtPointOnLine(pointOnLine, angle, max_gap / 2, true);
-        uint widthLower1 =
-            getWidthAtPointOnLine(pointOnLine, angle, max_gap / 2, false);
-        uint widthUpper2 = getWidthAtPointOnLine(pointOnLine, oppositeAngle,
-                                                 max_gap / 2, false);
-        uint widthLower2 = getWidthAtPointOnLine(pointOnLine, oppositeAngle,
-                                                 max_gap / 2, true);
+        uint widthUpper1 = getWidthAtPointOnLine(pointOnLine, lineAngle,  //
+                                                 maxLineGap / 2, true);
+        uint widthLower1 = getWidthAtPointOnLine(pointOnLine, lineAngle,  //
+                                                 maxLineGap / 2, false);
+        uint widthUpper2 = getWidthAtPointOnLine(pointOnLine, oppositeAngle,  //
+                                                 maxLineGap / 2, false);
+        uint widthLower2 = getWidthAtPointOnLine(pointOnLine, oppositeAngle,  //
+                                                 maxLineGap / 2, true);
 
         // Use the maximum of the upper width and the maximum of the lower width
         uint widthUpper = std::max(widthUpper1, widthUpper2);
         uint widthLower = std::max(widthLower1, widthLower2);
 
-        // If either of the widths exceeded the maxLineWidth, the result is
+        // If either of the widths exceeds the maxLineWidth, the result is
         // invalid: it is probably a large white spot, not a thin line
         if (widthUpper >= maxLineWidth || widthLower >= maxLineWidth)
-            return {Pixel(), 0, false};  // return invalid pixel
-#ifdef DEBUG
-        cout << "widthUpper = " << widthUpper << ", widthLower = " << widthLower
-             << endl;
-#endif
+            return std::nullopt;
 
         // Use the difference between the two widths to move the given point
         // towards the center
@@ -484,7 +489,7 @@ class GridMask {
             std::abs(middlePointCorrection_x2) / 2;
         // Should we move up or down? (+90° or -90° from the estimated angle)
         bool corrDirection = middlePointCorrection_x2 > 0;
-        CosSin corrAngle   = angle.perpendicular(corrDirection);
+        CosSin corrAngle   = lineAngle.perpendicular(corrDirection);
 
         BresenhamLine corr = {pointOnLine, corrAngle, W, H};
         Pixel middle       = corr.next();  // == pointOnLine
@@ -528,7 +533,7 @@ class GridMask {
     constexpr static uint MINIMIM_LINE_WEIGHTED_VOTE_COUNT =
         (W + H) / 2;  // TODO
 
-    std::array<LineResult, 2> getFirstLines() {
+    std::array<std::optional<LineResult>, 2> getFirstLines() {
         auto start = getFirstLineEstimate();
 
         constexpr uint range = angle_t::resolution() / 40;  // 2 * 9°
@@ -548,7 +553,7 @@ class GridMask {
         BresenhamLine path = {start, angle, W, H};
         Pixel end;
         while (path.hasNext() &&
-               path.getCurrentLength() < distance)  // TODO: OBOE?
+               path.getCurrentLength() <= distance)  // TODO: OBOE?
             end = path.next();
         return end;
     }
