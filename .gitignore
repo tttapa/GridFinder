@@ -1,6 +1,7 @@
 cmake/
 build/*
 *.png
+!Images/square.png
 *.gif
 *.pyc
 *.egg-info

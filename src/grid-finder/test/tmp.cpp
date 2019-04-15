@@ -2,6 +2,6 @@
 #include "TestMask.hpp"
 
 int main() {
-    GridFinder gf = mask;
+    GridFinder gf = {mask};
     cout << gf.findSquare() << endl;
 }

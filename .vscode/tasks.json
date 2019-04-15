@@ -44,5 +44,14 @@
                 "clear": true
             }
         },
+        {
+            "label": "Generate Documentation",
+            "type": "shell",
+            "command": "rm -rf html && doxygen && sensible-browser html/index.html",
+            "options": {
+                "cwd": "${workspaceFolder}/doc"
+            },
+            "problemMatcher": []
+        },
     ]
 }

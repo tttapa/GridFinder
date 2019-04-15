@@ -63,6 +63,7 @@ enable_testing()
 
 # Compiler flags for C++
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} \
+-march=native \
 -O3 -g3 \
 -Wall -Wextra -Werror \
 -Wsuggest-override \
@@ -82,11 +83,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 #################################   LIBRARIES   ################################
 ################################################################################
 
-add_subdirectory("matrix")
-add_subdirectory("grid-finder")
-add_subdirectory("utilities")
-add_subdirectory("py-matrix")
-add_subdirectory("py-grid-finder")
+add_subdirectory("src")
 
 ################################################################################
 ###############################   APPLICATIONS   ###############################

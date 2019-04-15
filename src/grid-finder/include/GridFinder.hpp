@@ -13,14 +13,21 @@
 #include <limits>
 #include <optional>
 
-// #define DEBUG
-
 using std::cerr;
 using std::cout;
 using std::endl;
+using std::optional;
 
-#ifdef TEMPLATE_GRIDFINDER
-template <uint W, uint H>
+/**
+ * @brief   A class for finding the lines and intersections in an image of a 
+ *          grid.
+ * @tparam  W
+ *          The width of the image in pixels.
+ * @tparam  H
+ *          The height of the image in pixels.
+ */
+#if 1
+template <size_t W, size_t H>
 #else
 constexpr uint H = 308;
 constexpr uint W = 410;
@@ -38,8 +45,6 @@ class GridFinder {
     /// the line
     constexpr static uint HOUGH_MAX_GAP = 16;
 
-    // TODO: HoughResult --> ? (better name - line with vote count)
-    // TODO: hough() --> countVotes()
     /**
      * @brief   Starting from the given pixel, move in the direction of the 
      *          given angle, and count the number of white pixels, weighing them
@@ -53,23 +58,16 @@ class GridFinder {
      */
     HoughResult hough(Pixel px, angle_t angle) const {
         BresenhamLine line = {px, angle, W, H};
-        uint count         = 0;
-        // uint_fast16_t weight = 0;
         uint previousWhite = 0;
         while (line.hasNext()) {
             Pixel point = line.next();
-            // If pixel is white, then add weight to count
-            if (get(point)) {
-                // TODO: can we use line.getCurrentLength as weight?
-                // count += weight++;
-                ++count;
+            // If pixel is white
+            if (get(point))
                 previousWhite = line.getCurrentLength();
-            } else if (line.getCurrentLength() - previousWhite >=
-                       HOUGH_MAX_GAP) {
+            else if (line.getCurrentLength() - previousWhite >= HOUGH_MAX_GAP)
                 break;
-            }
         }
-        return {angle, count};
+        return {angle, previousWhite};
     }
 
     /** 
@@ -175,7 +173,7 @@ class GridFinder {
             for (uint j = 0; j <= N + centerAngleIndex - angle_t::resolution();
                  ++i, ++j)
                 houghRes.at(i) = hough(px, angle_t(j));
-        } else {  // TODO: dangerous when flying!
+        } else {
             throw std::runtime_error("Something is very wrong");
         }
         // If there are multiple elements with the same maximum count,
@@ -299,9 +297,8 @@ class GridFinder {
      *          The maximum gap of black pixels that can be recovered.
      * @return  TODO 
      */
-    std::optional<GetMiddleResult> getMiddle(Pixel pointOnLine,
-                                             CosSin lineAngle,
-                                             uint maxLineGap = MAX_GAP) const {
+    optional<GetMiddleResult> getMiddle(Pixel pointOnLine, CosSin lineAngle,
+                                        uint maxLineGap = MAX_GAP) const {
         // If the given point does not lie on a line, we can't find the middle
         // of the line
         if (get(pointOnLine) == 0x00)
@@ -359,9 +356,9 @@ class GridFinder {
      * @param angle 
      * @return GetMiddleResult 
      */
-    std::optional<GetMiddleResult> getMiddleWithRetries(Pixel start,
-                                                        angle_t angle) const {
-        std::optional<GetMiddleResult> middle = std::nullopt;
+    optional<GetMiddleResult> getMiddleWithRetries(Pixel start,
+                                                   angle_t angle) const {
+        optional<GetMiddleResult> middle = std::nullopt;
         Pixel previousPixel;
         do {
             previousPixel = start;
@@ -468,7 +465,7 @@ class GridFinder {
      *          `MINIMUM_START_LINE_WIDTH`.  
      *          Also doesn't return an estimate if `getMiddleWithRetries` fails.
      */
-    std::optional<FirstLineEstimate> getFirstLineEstimate(Pixel point) const {
+    optional<FirstLineEstimate> getFirstLineEstimate(Pixel point) const {
         // Find an estimate for the slope of the line.
         // Doesn't have to be accurate, just to find the width.
         HoughResult firstResult = findLineAngle(point);
@@ -479,7 +476,7 @@ class GridFinder {
         if (firstResult.count < MINIMIM_START_LINE_WEIGHTED_VOTE_COUNT)
             return std::nullopt;
 
-        std::optional<GetMiddleResult> middle =
+        optional<GetMiddleResult> middle =
             getMiddleWithRetries(point, firstAngle);
 
         if (!middle.has_value() || middle->width < MINIMUM_START_LINE_WIDTH)
@@ -542,7 +539,7 @@ class GridFinder {
      *          Also returns no result if `getFirstLineEstimate` fails, or if no
      *          white pixels are found in the given column.
      */
-    std::optional<FirstLineEstimate> getFirstLineEstimate(uint x) const {
+    optional<FirstLineEstimate> getFirstLineEstimate(uint x) const {
         if (x >= W)
             throw std::out_of_range("x out of range");
 
@@ -645,7 +642,7 @@ class GridFinder {
      * @return  Returns no result if no valid lines are found across the entire
      *          frame.
      */
-    std::optional<FirstLineEstimate> getFirstLineEstimate() const {
+    optional<FirstLineEstimate> getFirstLineEstimate() const {
         CenterPointOutLineIterator c = {W / FIRST_LINE_INVALID_HORIZONTAL_JUMP};
         while (c.hasNext()) {
             uint x = c.next() * FIRST_LINE_INVALID_HORIZONTAL_JUMP;
@@ -655,8 +652,8 @@ class GridFinder {
         return std::nullopt;
     }
 
-    std::array<std::optional<LineResult>, 2> getFirstTwoLines() {
-        std::optional<FirstLineEstimate> start = getFirstLineEstimate();
+    std::array<optional<LineResult>, 2> getFirstTwoLines() {
+        optional<FirstLineEstimate> start = getFirstLineEstimate();
         if (!start.has_value())
             return {std::nullopt, std::nullopt};
 
@@ -665,10 +662,6 @@ class GridFinder {
             start->middle, start->angleEstimate);
         HoughResult result2 = findLineAngleAccurateRange<range>(
             start->middle, start->angleEstimate.opposite());
-#ifdef DEBUG
-        cout << "result1.angle = " << result1.angle << endl;
-        cout << "result2.angle = " << result2.angle << endl;
-#endif
         return {{
             LineResult{start->middle, start->width, result1.angle},
             LineResult{start->middle, start->width, result2.angle},
@@ -709,13 +702,9 @@ class GridFinder {
      *          line.
      * @return  // TODO
      */
-    std::optional<LineResult> findNextLine(LineResult line, bool direction,
-                                           uint minDistance = 0,
-                                           uint offset      = 0) const {
-#ifdef DEBUG
-        cout << "findNextLine(" << line << ", minDistance=" << minDistance
-             << ", offset=" << offset << endl;
-#endif
+    optional<LineResult> findNextLine(LineResult line, bool direction,
+                                      uint minDistance = 0,
+                                      uint offset      = 0) const {
         angle_t angle = line.angle;
         angle_t perp  = angle.perpendicular(direction);
 
@@ -723,9 +712,6 @@ class GridFinder {
         searchStart       = move(searchStart, perp, 2 * line.width + offset);
         if (minDistance)
             searchStart = move(searchStart, line.angle, minDistance);
-#ifdef DEBUG
-        cout << "searchStart = " << searchStart << endl;
-#endif
 
         uint minWidth = line.width / 3;
 
@@ -745,7 +731,7 @@ class GridFinder {
             // In the center of this range of white pixels, try to find the
             // perpendicular line
             Pixel middle = Pixel::average(firstBlack, firstWhite);
-            std::optional<LineResult> possibleLine =
+            optional<LineResult> possibleLine =
                 checkLine(middle, perp, minWidth);
             // If a line has been found, return it
             if (possibleLine)
@@ -758,9 +744,9 @@ class GridFinder {
         return std::nullopt;
     }
 
-    std::optional<LineResult> findNextLine(std::optional<LineResult> line,
-                                           bool direction, uint minDistance = 0,
-                                           uint offset = 0) const {
+    optional<LineResult> findNextLine(optional<LineResult> line, bool direction,
+                                      uint minDistance = 0,
+                                      uint offset      = 0) const {
         return line.has_value()
                    ? findNextLine(*line, direction, minDistance, offset)
                    : std::nullopt;
@@ -778,13 +764,9 @@ class GridFinder {
      *          Only accept a line that's wider than this minimum width.
      * @return  // TODO
      */
-    std::optional<LineResult> checkLine(Pixel pixel, angle_t angle,
-                                        uint minWidth) const {
-#ifdef DEBUG
-        cout << "checkLine(" << pixel << ", " << angle
-             << ", minWidth=" << minWidth << ")" << endl;
-#endif
-        std::optional<GetMiddleResult> middle = getMiddle(pixel, angle);
+    optional<LineResult> checkLine(Pixel pixel, angle_t angle,
+                                   uint minWidth) const {
+        optional<GetMiddleResult> middle = getMiddle(pixel, angle);
         if (!middle.has_value() || middle->width <= minWidth)
             return std::nullopt;
 
@@ -792,9 +774,6 @@ class GridFinder {
         HoughResult result =
             findLineAngleAccurateRange<range>(middle->pixel, angle);
 
-#ifdef DEBUG
-        cout << "checkLine: result.count = " << result.count << endl;
-#endif
         if (result.count < MINIMIM_LINE_WEIGHTED_VOTE_COUNT)
             return std::nullopt;
         return LineResult{middle->pixel, middle->width, result.angle};
@@ -802,77 +781,89 @@ class GridFinder {
 
 #pragma endregion
 
-#pragma region Finding the center square(main function)........................
+#pragma region Finding the center square(main function).........................
 
+    /**
+     * @brief   This is the main function: it looks for a complete square of the
+     *          grid, as close to the center of the frame as possible.
+     * 
+     * @image   html square.png
+     * 
+     * @return  // TODO 
+     */
     Square findSquare() {
         Square sq;
 
-        // try {
-        auto firstLines = getFirstTwoLines();
+        try {
+            // Get the line closest to the center of the frame.
+            // the result is an array of two half-lines, approximately opposite
+            // of each other
+            auto firstLines = getFirstTwoLines();
+            sq.lines[0]     = firstLines[0];
+            sq.lines[1]     = firstLines[1];
 
-        sq.lines[0] = firstLines[0];
-        sq.lines[1] = firstLines[1];
-
-        // Determine the direction to turn in (+90° or -90°)
-        // Check if the first line lies left or right of the center of the frame
-        // and pick the direction that will result in the square containing the
-        // center point (if possible)
-        bool direction = false;
-        if (sq.lines[0].has_value()) {
-            Line mathLine = {sq.lines[0]->lineCenter, sq.lines[0]->angle};
-            direction     = mathLine.leftOfPoint(center());
-        }
-
-        // TODO: maybe try again once if it fails?
-        sq.lines[2] = findNextLine(sq.lines[0], direction);   // second line
-        sq.lines[3] = findNextLine(sq.lines[1], !direction);  // third line
-
-        if (sq.lines[2].has_value() && sq.lines[3].has_value()) {
-            sq.points[0] = intersect(*sq.lines[0], *sq.lines[2]);
-            sq.points[1] = intersect(*sq.lines[1], *sq.lines[3]);
-
-            // Calculate the distance between the first two points
-            // (note that this is not the Euclidian distance, but the
-            // number of pixels that would be drawn by Bresenham)
-            uint minDistance = std::floor(
-                std::max(std::abs(sq.points[0]->x - sq.points[1]->x),
-                         std::abs(sq.points[0]->y - sq.points[1]->y)));
-            // Use 3/4 of this distance as a minimum distance for where to
-            // start looking for the fourth line, as it's very likely that
-            // the other sides of the square are roughly the same length as
-            // the first side
-            minDistance -= minDistance / 4;
-            uint offset          = 0;
-            const uint maxOffset = minDistance / 2;
-            const uint offsetIncr =
-                std::max(sq.lines[2]->width, sq.lines[3]->width);
-
-            // Search for the fourth line
-            while (!sq.lines[4].has_value() && offset < maxOffset) {
-                sq.lines[4] =
-                    findNextLine(  // find the fourth line along the second
-                        sq.lines[2], direction, minDistance, offset);
-                if (!sq.lines[4].has_value())  // if not found along second
-                    sq.lines[4] =
-                        findNextLine(  // find the fourth line along the third
-                            sq.lines[3], !direction, minDistance, offset);
-                // next time, try again with a different offset
-                offset += offsetIncr;
+            // Determine the direction to turn in (+90° or -90°)
+            // Check if the first line lies left or right of the center of the frame
+            // and pick the direction that will result in the square containing the
+            // center point (if possible)
+            bool direction = false;
+            if (sq.lines[0].has_value()) {
+                Line mathLine = {sq.lines[0]->lineCenter, sq.lines[0]->angle};
+                direction     = mathLine.leftOfPoint(center());
             }
-            if (sq.lines[4].has_value()) {
-                sq.points[2] = intersect(*sq.lines[2], *sq.lines[4]);
-                sq.points[3] = intersect(*sq.lines[3], *sq.lines[4]);
+
+            // TODO: maybe try again once if it fails?
+            sq.lines[2] = findNextLine(sq.lines[0], direction);   // second line
+            sq.lines[3] = findNextLine(sq.lines[1], !direction);  // third line
+
+            // If we found all lines so far (first two, second, and third)
+            if (sq.lines[2].has_value() && sq.lines[3].has_value()) {
+                sq.points[0] = intersect(*sq.lines[0], *sq.lines[2]);
+                sq.points[1] = intersect(*sq.lines[1], *sq.lines[3]);
+
+                // Calculate the distance between the first two points
+                // (note that this is not the Euclidian distance, but the
+                // number of pixels that would be drawn by Bresenham)
+                uint minDistance = std::floor(
+                    std::max(std::abs(sq.points[0]->x - sq.points[1]->x),
+                             std::abs(sq.points[0]->y - sq.points[1]->y)));
+                // Use 3/4 of this distance as a minimum distance for where to
+                // start looking for the fourth line, as it's very likely that
+                // the other sides of the square are roughly the same length as
+                // the first side
+                minDistance -= minDistance / 4;
+                uint offset          = 0;
+                const uint maxOffset = minDistance / 2;
+                const uint offsetIncr =
+                    std::max(sq.lines[2]->width, sq.lines[3]->width);
+
+                // Search for the fourth line
+                while (!sq.lines[4].has_value() && offset < maxOffset) {
+                    sq.lines[4] =  // find the fourth line along the second
+                        findNextLine(sq.lines[2], direction, minDistance,
+                                     offset);
+                    if (!sq.lines[4].has_value())  // if not found along second
+                        sq.lines[4] =  // find the fourth line along the third
+                            findNextLine(sq.lines[3], !direction, minDistance,
+                                         offset);
+                    // next time, try again with a different offset
+                    offset += offsetIncr;
+                }
+                // If we found a fourth line, calculate the intersections
+                if (sq.lines[4].has_value()) {
+                    sq.points[2] = intersect(*sq.lines[2], *sq.lines[4]);
+                    sq.points[3] = intersect(*sq.lines[3], *sq.lines[4]);
+                }
+            } else if (sq.lines[2].has_value()) {
+                // TODO
+            } else if (sq.lines[3].has_value()) {
+                // TODO
+            } else {
+                // TODO
             }
-        } else if (sq.lines[2].has_value()) {
-            // TODO
-        } else if (sq.lines[3].has_value()) {
-            // TODO
-        } else {
-            // TODO
+        } catch (std::exception &e) {
+            cerr << ANSIColors::redb << e.what() << ANSIColors::reset << endl;
         }
-        // } catch (std::runtime_error &e) {
-        //     cerr << ANSIColors::redb << e.what() << ANSIColors::reset << endl;
-        // }
         return sq;
     }
 

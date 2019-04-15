@@ -2,9 +2,9 @@
 
 #include <array>
 #include <cmath>
-#include <uint.hpp>
 #include <limits>
 #include <ostream>
+#include <uint.hpp>
 
 template <uint>
 class Angle;
@@ -94,7 +94,8 @@ class Angle {
     [[nodiscard]] constexpr Angle opposite() const { return *this + M_PI; }
 
     [[nodiscard]] constexpr Angle perpendicular(bool plus90deg = true) const {
-        return plus90deg ? *this + M_PI_2 : *this + 3 * M_PI_2;
+        return plus90deg ? *this + Angle(resolution() / 4)
+                         : *this + Angle(3 * resolution() / 4);
     }
 
     [[nodiscard]] constexpr Angle operator+(Angle rhs) const {
