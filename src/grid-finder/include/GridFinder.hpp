@@ -906,14 +906,14 @@ class GridFinder {
             bool firstCornerFound  = false;
             bool secondCornerFound = false;
             float dist1, dist2, currentDistance;
-            float jump1, jump2;
+            uint jump1, jump2;
             Point initialPoint = sq.lines[0].lineCenter;
             Point tempPoint;
             LineResult tempLine;
             for (uint i = 0; i < initialTries; i++) {
 
                 // Jump initialTriesFactor times the initial line width.
-                jump = i * std::round(initialTriesFactor * sq.lines[0].width);
+                uint jump = i * std::round(initialTriesFactor * sq.lines[0].width);
 
                 // First corner: remember closest point to the initial point.
                 tempLine = findNextLine(sq.lines[0], direction, jump);
