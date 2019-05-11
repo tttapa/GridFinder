@@ -926,7 +926,7 @@ class GridFinder {
                     }
                 }
 
-                // First corner: remember closest point to the frame center.
+                // Second corner: remember closest point to the frame center.
                 if (sq.lines[3].has_value()) {
                     temp            = intersect(*sq.lines[1], *sq.lines[3]);
                     currentDistance = Point::distsq(initialPoint, temp);
