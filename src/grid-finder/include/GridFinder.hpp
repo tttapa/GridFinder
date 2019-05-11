@@ -898,7 +898,7 @@ class GridFinder {
             }
 
             // Try finding the first two corners multiple times. We'll remember the
-            // ones closest to the frame center, so if there's a hold in the image's
+            // ones closest to the frame center, so if there's a hole in the image's
             // line, one of the Bresenham lines will still likely find the correct
             // perpendicular line.
             bool firstCornerFound  = false;
