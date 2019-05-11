@@ -12,6 +12,12 @@ struct Point {
     constexpr bool operator==(Point rhs) const {
         return this->x == rhs.x && this->y == rhs.y;
     }
+    static Point fromPixel(Pixel a) { return Point{(float) a.x, (float) a.y}; }
+    static float distsq(Point a, Point b) {
+        float dx = b.x - a.x;
+        float dy = b.y - a.y;
+        return dx * dx + dy * dy;
+    }
 };
 
 inline std::ostream &operator<<(std::ostream &os, Point p) {

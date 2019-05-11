@@ -864,9 +864,19 @@ class GridFinder {
      * 
      * @image   html square.png
      * 
+     * @param   initialTries (default: 1)
+     *          When finding the first two corners, this many Bresenham lines will
+     *          run parallel to the initial line in order to prevent a bad result
+     *          because of a small gap in the line.
+     * @param   initialTriesFactor (default: 2.0)
+     *          When finding the first two corners, the parallel Bresenham lines
+     *          be separated by this factor multiplied by the initial line width.
+     * 
      * @return  // TODO 
      */
-    Square findSquare() {
+    Square findSquare(int initialTries = 1, float initialTriesFactor = 2.0f) {
+        static_assert(initialTries >= 1);
+        static_assert(initialTries > 0.0f);
         Square sq;
 
         try {
@@ -887,15 +897,47 @@ class GridFinder {
                 direction     = mathLine.leftOfPoint(center());
             }
 
-            // Find the two lines perpendicular to the first half lines
-            // TODO: maybe try again once with a different offset if it fails?
-            sq.lines[2] = findNextLine(sq.lines[0], direction);   // second line
-            sq.lines[3] = findNextLine(sq.lines[1], !direction);  // third line
+            // Try finding the first two corners multiple times. We'll remember the
+            // ones closest to the frame center, so if there's a hold in the image's
+            // line, one of the Bresenham lines will still likely find the correct
+            // perpendicular line.
+            bool firstCornerFound  = false;
+            bool secondCornerFound = false;
+            float dist1, dist2, currentDistance;
+            Point frameCenter = Point::fromPixel(getCenter());
+            Point temp;
+            for (uint i = 0; i < initialTries; i++) {
+                // Second & third line...
+                int jump1   = (int) (initialTriesFactor * sq.lines[2].width);
+                int jump2   = (int) (initialTriesFactor * sq.lines[3].width);
+                sq.lines[2] = findNextLine(sq.lines[0], direction, , jump1);
+                sq.lines[3] = findNextLine(sq.lines[1], !direction, , jump2);
+
+                // First corner: remember closest point to the frame center.
+                if (sq.lines[2].has_value()) {
+                    temp            = intersect(*sq.lines[0], *sq.lines[2]);
+                    currentDistance = Point::distsq(frameCenter, temp);
+                    if (!firstCornerFound || currentDistance < dist1) {
+                        firstCornerFound = true;
+                        dist1            = currentDistance;
+                        sq.points[0]     = temp;
+                    }
+                }
+
+                // First corner: remember closest point to the frame center.
+                if (sq.lines[3].has_value()) {
+                    temp            = intersect(*sq.lines[1], *sq.lines[3]);
+                    currentDistance = Point::distsq(frameCenter, temp);
+                    if (!secondCornerFound || currentDistance < dist2) {
+                        secondCornerFound = true;
+                        dist2             = currentDistance;
+                        sq.points[1]      = temp;
+                    }
+                }
+            }
 
             // If we found all lines so far (first two, second, and third)
-            if (sq.lines[2].has_value() && sq.lines[3].has_value()) {
-                sq.points[0] = intersect(*sq.lines[0], *sq.lines[2]);
-                sq.points[1] = intersect(*sq.lines[1], *sq.lines[3]);
+            if (firstCornerFound && secondCornerFound) {
 
                 // Calculate the distance between the first two points
                 // (note that this is not the Euclidian distance, but the
