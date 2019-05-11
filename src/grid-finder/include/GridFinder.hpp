@@ -764,18 +764,18 @@ class GridFinder {
      * @param   direction
      *          Should 90° be added or subtracted to get the perpendicular
      *          direction?     
+     * @param   offset
+     *          The offset of the search path, measured perpendicularly from the
+     *          line.
      * @param   minDistance 
      *          The minimum distance between the given center point of the line
      *          and the perpendicular line. Essentially moves the starting point
      *          of the search along the line for this distance.
-     * @param   offset
-     *          The offset of the search path, measured perpendicularly from the
-     *          line.
      * @return  // TODO
      */
     optional<LineResult> findNextLine(LineResult line, bool direction,
-                                      uint minDistance = 0,
-                                      uint offset      = 0) const {
+                                      uint offset      = 0,
+                                      uint minDistance = 0,) const {
         angle_t angle = line.angle;
         angle_t perp  = angle.perpendicular(direction);
 
@@ -820,8 +820,8 @@ class GridFinder {
      *          but also supports optional #LineResult%s.
      */
     optional<LineResult> findNextLine(optional<LineResult> line, bool direction,
-                                      uint minDistance = 0,
-                                      uint offset      = 0) const {
+                                      uint offset      = 0,
+                                      uint minDistance = 0) const {
         return line.has_value()
                    ? findNextLine(*line, direction, minDistance, offset)
                    : std::nullopt;
@@ -874,9 +874,9 @@ class GridFinder {
      * 
      * @return  // TODO 
      */
-    Square findSquare(int initialTries = 1, float initialTriesFactor = 2.0f) {
-        static_assert(initialTries >= 1);
-        static_assert(initialTries > 0.0f);
+    Square findSquare(uint initialTries = 1, float initialTriesFactor = 2.0f) {
+        assert(initialTries >= 1);
+        assert(initialTries > 0.0f);
         Square sq = {};
 
         try {
@@ -912,8 +912,8 @@ class GridFinder {
                 // Second & third line...
                 uint jump1   = std::round(initialTriesFactor * sq.lines[2].width);
                 uint jump2   = std::round(initialTriesFactor * sq.lines[3].width);
-                sq.lines[2] = findNextLine(sq.lines[0], direction, , jump1);
-                sq.lines[3] = findNextLine(sq.lines[1], !direction, , jump2);
+                sq.lines[2] = findNextLine(sq.lines[0], direction, jump1);
+                sq.lines[3] = findNextLine(sq.lines[1], !direction, jump2);
 
                 // First corner: remember closest point to the frame center.
                 if (sq.lines[2].has_value()) {
@@ -960,12 +960,12 @@ class GridFinder {
                 // Search for the fourth line
                 while (!sq.lines[4].has_value() && offset < maxOffset) {
                     sq.lines[4] =  // find the fourth line along the second
-                        findNextLine(sq.lines[2], direction, minDistance,
-                                     offset);
+                        findNextLine(sq.lines[2], direction, offset,
+                                     minDistance);
                     if (!sq.lines[4].has_value())  // if not found along second
                         sq.lines[4] =  // find the fourth line along the third
-                            findNextLine(sq.lines[3], !direction, minDistance,
-                                         offset);
+                            findNextLine(sq.lines[3], !direction, offset,
+                                         minDistance);
                     // next time, try again with a different offset
                     offset += offsetIncr;
                 }
