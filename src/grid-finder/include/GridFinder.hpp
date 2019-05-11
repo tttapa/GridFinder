@@ -877,7 +877,7 @@ class GridFinder {
     Square findSquare(int initialTries = 1, float initialTriesFactor = 2.0f) {
         static_assert(initialTries >= 1);
         static_assert(initialTries > 0.0f);
-        Square sq;
+        Square sq = {};
 
         try {
             // Get the line closest to the center of the frame.
@@ -887,15 +887,17 @@ class GridFinder {
             sq.lines[0]     = firstLines[0];
             sq.lines[1]     = firstLines[1];
 
+            // Return empty square if we couldn't find the first line.
+            if(!sq.lines[0].has_value())
+                return sq;
+
             // Determine the direction to turn in (+90° or -90°)
             // Check if the first line lies left or right of the center of the frame
             // and pick the direction that will result in the square containing the
             // center point (if possible)
             bool direction = false;
-            if (sq.lines[0].has_value()) {
-                Line mathLine = {sq.lines[0]->lineCenter, sq.lines[0]->angle};
-                direction     = mathLine.leftOfPoint(center());
-            }
+            Line mathLine = {sq.lines[0]->lineCenter, sq.lines[0]->angle};
+            direction     = mathLine.leftOfPoint(center());
 
             // Try finding the first two corners multiple times. We'll remember the
             // ones closest to the frame center, so if there's a hole in the image's
@@ -904,19 +906,19 @@ class GridFinder {
             bool firstCornerFound  = false;
             bool secondCornerFound = false;
             float dist1, dist2, currentDistance;
-            Point frameCenter = Point::fromPixel(getCenter());
+            Point initialPoint = sq.lines[0].lineCenter;
             Point temp;
             for (uint i = 0; i < initialTries; i++) {
                 // Second & third line...
-                int jump1   = (int) (initialTriesFactor * sq.lines[2].width);
-                int jump2   = (int) (initialTriesFactor * sq.lines[3].width);
+                uint jump1   = std::round(initialTriesFactor * sq.lines[2].width);
+                uint jump2   = std::round(initialTriesFactor * sq.lines[3].width);
                 sq.lines[2] = findNextLine(sq.lines[0], direction, , jump1);
                 sq.lines[3] = findNextLine(sq.lines[1], !direction, , jump2);
 
                 // First corner: remember closest point to the frame center.
                 if (sq.lines[2].has_value()) {
                     temp            = intersect(*sq.lines[0], *sq.lines[2]);
-                    currentDistance = Point::distsq(frameCenter, temp);
+                    currentDistance = Point::distsq(initialPoint, temp);
                     if (!firstCornerFound || currentDistance < dist1) {
                         firstCornerFound = true;
                         dist1            = currentDistance;
@@ -927,7 +929,7 @@ class GridFinder {
                 // First corner: remember closest point to the frame center.
                 if (sq.lines[3].has_value()) {
                     temp            = intersect(*sq.lines[1], *sq.lines[3]);
-                    currentDistance = Point::distsq(frameCenter, temp);
+                    currentDistance = Point::distsq(initialPoint, temp);
                     if (!secondCornerFound || currentDistance < dist2) {
                         secondCornerFound = true;
                         dist2             = currentDistance;
