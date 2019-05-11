@@ -900,7 +900,7 @@ class GridFinder {
             direction      = mathLine.leftOfPoint(center());
 
             // Try finding the first two corners multiple times. We'll remember the
-            // ones closest to the frame center, so if there's a hole in the image's
+            // ones closest to the initial point, so if there's a hole in the image's
             // line, one of the Bresenham lines will still likely find the correct
             // perpendicular line.
             bool firstCornerFound  = false;
@@ -910,11 +910,11 @@ class GridFinder {
             Point tempPoint;
             LineResult tempLine;
             for (uint i = 0; i < initialTries; i++) {
-                
+
                 // Jump initialTriesFactor times the initial line width.
                 jump = i * std::round(initialTriesFactor * sq.lines[0].width);
 
-                // First corner: remember closest point to the frame center.
+                // First corner: remember closest point to the initial point.
                 tempLine = findNextLine(sq.lines[0], direction, jump);
                 if (tempLine.has_value()) {
                     tempPoint       = intersect(*sq.lines[0], *sq.lines[2]);
@@ -927,7 +927,7 @@ class GridFinder {
                     }
                 }
 
-                // Second corner: remember closest point to the frame center.
+                // Second corner: remember closest point to the initial point.
                 tempLine = findNextLine(sq.lines[1], !direction, jump);
                 if (tempLine.has_value()) {
                     tempPoint       = intersect(*sq.lines[1], *sq.lines[3]);
