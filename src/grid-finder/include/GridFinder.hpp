@@ -906,6 +906,7 @@ class GridFinder {
             bool firstCornerFound  = false;
             bool secondCornerFound = false;
             float dist1, dist2, currentDistance;
+            float jump1, jump2;
             Point initialPoint = sq.lines[0].lineCenter;
             Point tempPoint;
             LineResult tempLine;
@@ -924,6 +925,7 @@ class GridFinder {
                         dist1            = currentDistance;
                         sq.points[0]     = tempPoint;
                         sq.lines[2]      = tempLine;
+                        jump1            = jump;
                     }
                 }
 
@@ -937,6 +939,7 @@ class GridFinder {
                         dist2             = currentDistance;
                         sq.points[1]      = tempPoint;
                         sq.lines[3]       = tempLine;
+                        jump2             = jump;
                     }
                 }
             }
@@ -964,11 +967,11 @@ class GridFinder {
                 while (!sq.lines[4].has_value() && offset < maxOffset) {
                     sq.lines[4] =  // find the fourth line along the second
                         findNextLine(sq.lines[2], direction, offset,
-                                     minDistance);
+                                     std::max(minDistance - jump1, 0));
                     if (!sq.lines[4].has_value())  // if not found along second
                         sq.lines[4] =  // find the fourth line along the third
                             findNextLine(sq.lines[3], !direction, offset,
-                                         minDistance);
+                                         std::max(minDistance - jump2, 0));
                     // next time, try again with a different offset
                     offset += offsetIncr;
                 }
