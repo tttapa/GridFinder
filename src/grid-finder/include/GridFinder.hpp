@@ -910,8 +910,8 @@ class GridFinder {
             Point temp;
             for (uint i = 0; i < initialTries; i++) {
                 // Second & third line...
-                uint jump1   = std::round(initialTriesFactor * sq.lines[2].width);
-                uint jump2   = std::round(initialTriesFactor * sq.lines[3].width);
+                uint jump1   = i*std::round(initialTriesFactor * sq.lines[2].width);
+                uint jump2   = i*std::round(initialTriesFactor * sq.lines[3].width);
                 sq.lines[2] = findNextLine(sq.lines[0], direction, jump1);
                 sq.lines[3] = findNextLine(sq.lines[1], !direction, jump2);
 
