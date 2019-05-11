@@ -775,7 +775,7 @@ class GridFinder {
      */
     optional<LineResult> findNextLine(LineResult line, bool direction,
                                       uint offset      = 0,
-                                      uint minDistance = 0,) const {
+                                      uint minDistance = 0, ) const {
         angle_t angle = line.angle;
         angle_t perp  = angle.perpendicular(direction);
 
@@ -888,7 +888,7 @@ class GridFinder {
             sq.lines[1]     = firstLines[1];
 
             // Return empty square if we couldn't find the first line.
-            if(!sq.lines[0].has_value())
+            if (!sq.lines[0].has_value())
                 return sq;
 
             // Determine the direction to turn in (+90° or -90°)
@@ -896,8 +896,8 @@ class GridFinder {
             // and pick the direction that will result in the square containing the
             // center point (if possible)
             bool direction = false;
-            Line mathLine = {sq.lines[0]->lineCenter, sq.lines[0]->angle};
-            direction     = mathLine.leftOfPoint(center());
+            Line mathLine  = {sq.lines[0]->lineCenter, sq.lines[0]->angle};
+            direction      = mathLine.leftOfPoint(center());
 
             // Try finding the first two corners multiple times. We'll remember the
             // ones closest to the frame center, so if there's a hole in the image's
@@ -907,33 +907,36 @@ class GridFinder {
             bool secondCornerFound = false;
             float dist1, dist2, currentDistance;
             Point initialPoint = sq.lines[0].lineCenter;
-            Point temp;
+            Point tempPoint;
+            LineResult tempLine;
             for (uint i = 0; i < initialTries; i++) {
-                // Second & third line...
-                uint jump1   = i*std::round(initialTriesFactor * sq.lines[2].width);
-                uint jump2   = i*std::round(initialTriesFactor * sq.lines[3].width);
-                sq.lines[2] = findNextLine(sq.lines[0], direction, jump1);
-                sq.lines[3] = findNextLine(sq.lines[1], !direction, jump2);
+                
+                // Jump initialTriesFactor times the initial line width.
+                jump = i * std::round(initialTriesFactor * sq.lines[0].width);
 
                 // First corner: remember closest point to the frame center.
-                if (sq.lines[2].has_value()) {
-                    temp            = intersect(*sq.lines[0], *sq.lines[2]);
-                    currentDistance = Point::distsq(initialPoint, temp);
+                tempLine = findNextLine(sq.lines[0], direction, jump);
+                if (tempLine.has_value()) {
+                    tempPoint       = intersect(*sq.lines[0], *sq.lines[2]);
+                    currentDistance = Point::distsq(initialPoint, tempPoint);
                     if (!firstCornerFound || currentDistance < dist1) {
                         firstCornerFound = true;
                         dist1            = currentDistance;
-                        sq.points[0]     = temp;
+                        sq.points[0]     = tempPoint;
+                        sq.lines[2]      = tempLine;
                     }
                 }
 
                 // Second corner: remember closest point to the frame center.
-                if (sq.lines[3].has_value()) {
-                    temp            = intersect(*sq.lines[1], *sq.lines[3]);
-                    currentDistance = Point::distsq(initialPoint, temp);
+                tempLine = findNextLine(sq.lines[1], !direction, jump);
+                if (tempLine.has_value()) {
+                    tempPoint       = intersect(*sq.lines[1], *sq.lines[3]);
+                    currentDistance = Point::distsq(initialPoint, tempPoint);
                     if (!secondCornerFound || currentDistance < dist2) {
                         secondCornerFound = true;
                         dist2             = currentDistance;
-                        sq.points[1]      = temp;
+                        sq.points[1]      = tempPoint;
+                        sq.lines[3]       = tempLine;
                     }
                 }
             }
